@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 1. Text removed, kept logo only -->
+    <title> </title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+    <link rel="manifest" id="app-manifest">
+    <meta name="theme-color" content="#3C0028">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{height:100%;overflow:hidden}
+        body{
+            background:#000;
+            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+            color:#fff;
+        }
+        .btn{border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;box-shadow:0 4px 8px rgba(0,0,0,.3);background:#E6B800;color:#3C0028;font-size:26px;font-weight:600;user-select:none}
+        .top-right{position:absolute;top:20px;right:20px;display:flex;flex-direction:column;gap:15px;z-index:10}
+        .top-left{position:absolute;top:20px;left:20px;z-index:10}
+        .center{position:absolute;top:80%;left:50%;transform:translateX(-50%);display:flex;gap:140px;align-items:center;justify-content:center;z-index:10}
+        .top-right .btn{width:50px;height:50px;font-size:20px}
+        .center .btn{width:100px;height:100px;font-size:44px}
+        .btn:hover{transform:translateY(-3px);box-shadow:0 6px 12px rgba(0,0,0,.5);background:#d4a800}
+        .btn:active{transform:translateY(1px) scale(.95);box-shadow:0 2px 4px rgba(0,0,0,.4);background:#c49900}
+        #toggle-scan-btn.camera-running{background:#b71c1c;color:#fff;box-shadow:0 0 15px rgba(183,28,28,.6)}
+        #toggle-scan-btn.camera-running:hover{background:#d32f2f}
+        .btn:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(100%);pointer-events:none}
+        .countdown{color:#3C0028;font-size:48px;font-weight:bold;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .4s;pointer-events:none;z-index:12;cursor:pointer}
+        .countdown.active{opacity:1;pointer-events:auto}
+        .countdown.warning{color:#ff4d4d;animation:pulse 1s infinite}
+        @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
+        .offline-badge{position:fixed;top:80px;left:20px;background:rgba(183,28,28,.9);color:#fff;padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:600;z-index:11;display:none;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.4);animation:popIn .3s}
+        .offline-badge.active{display:flex}
+        .sync-badge{position:fixed;top:80px;left:20px;background:rgba(33,150,243,.9);color:#fff;padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:600;z-index:11;display:none;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.4);animation:popIn .3s}
+        .sync-badge.active{display:flex}
+        .sync-badge i{animation:spin 1s linear infinite}
+        @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+        .list-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:100;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;padding-top:100px}
+        .list-overlay.active{opacity:1;visibility:visible}
+        .overlay-top-right{position:absolute;top:20px;right:20px;display:flex;gap:15px;z-index:250}
+        .overlay-btn{width:50px;height:50px;font-size:20px;font-weight:600;background:#E6B800;color:#3C0028;border:none;border-radius:50%;cursor:pointer;transition:.2s;box-shadow:0 4px 8px rgba(0,0,0,.3)}
+        .overlay-btn:hover{transform:translateY(-3px);box-shadow:0 6px 12px rgba(0,0,0,.5);background:#d4a800}
+        .overlay-btn:active{transform:translateY(1px) scale(.95);box-shadow:0 2px 4px rgba(0,0,0,.4);background:#c49900}
+        .table-container{width:100%;overflow-x:auto;overflow-y:auto;background:#000;flex-grow:1}
+        table{width:max-content;min-width:100%;border-collapse:collapse;color:#ddd;table-layout:fixed;background:#080808}
+        th,td{padding:10px 5px;text-align:center;border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.9rem}
+        th{background:#3C0028!important;position:sticky;top:0;font-weight:600;color:#E6B800;border-bottom:1px solid #333;z-index:50;cursor:pointer}
+        th:nth-child(1),td:nth-child(1){width:40px}
+        th:nth-child(2),td:nth-child(2){width:180px;text-align:left;padding-left:10px}
+        th:nth-child(3),td:nth-child(3){width:80px}
+        th:nth-child(30){background:#3C0028!important;color:#E6B800;border-left:2px solid #333}
+        th:nth-child(30),td:nth-child(30){width:80px}
+        td:nth-child(30){background:#0f0f0f;color:#00ff9d;font-weight:bold;border-left:2px solid #333}
+        th:nth-child(31){background:#3C0028!important;color:#E6B800;border-left:2px solid #333}
+        th:nth-child(31),td:nth-child(31){width:80px}
+        td:nth-child(31){background:#0f0f0f;color:#00ff9d;font-weight:bold;border-left:2px solid #333}
+        th:nth-child(2),td:nth-child(2){position:sticky;left:0;background-color:#080808;z-index:100;border-right:2px solid #444}
+        th:nth-child(2){background-color:#3C0028!important;z-index:150}
+        tr:hover{background:rgba(255,255,255,.05)}
+        td:nth-child(2):hover{background-color:rgba(255,255,255,.05)!important}
+        td.mark-cell{cursor:pointer;transition:background .2s;font-weight:bold}
+        td.mark-cell:hover{background:rgba(255,255,255,.05)}
+        td.mark-cell.disabled{cursor:not-allowed;opacity:.6}
+        td.mark-cell.disabled:hover{background:transparent}
+        .context-menu{position:fixed;background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:10px;display:none;flex-direction:column;gap:10px;width:200px;box-shadow:0 10px 25px rgba(0,0,0,.5);z-index:300;animation:popIn .2s}
+        .context-menu.active{display:flex}
+        .menu-item{background:#252525;color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;font-size:.95rem;transition:background .2s}
+        .menu-item:hover{background:#333}
+        .menu-item i{color:#E6B800}
+        .settings-panel{position:fixed;top:0;right:-300px;width:280px;height:100%;background:#111;border-left:1px solid #333;z-index:400;transition:right .15s;display:flex;flex-direction:column;box-shadow:-5px 0 20px rgba(0,0,0,.5)}
+        .settings-panel.active{right:0}
+        .settings-header{padding:20px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center}
+        .settings-title{color:#fff;font-size:1.2rem;font-weight:600}
+        .settings-close{background:none;border:none;color:#aaa;font-size:1.5rem;cursor:pointer}
+        .settings-body{padding:20px;display:flex;flex-direction:column;gap:15px}
+        .settings-menu-item{display:flex;align-items:center;gap:15px;padding:15px;background:#222;border-radius:8px;color:#ddd;cursor:pointer;transition:all .2s}
+        .settings-menu-item:hover{background:#2a2a2a;color:#fff}
+        .settings-menu-item i{color:#E6B800;font-size:1.1rem;width:20px;text-align:center}
+        .form-modal,#confirm-modal,#history-modal,#history-view-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
+        .form-modal.active,#confirm-modal.active,#history-modal.active,#history-view-modal.active{display:flex}
+        .form-container,.confirm-content{background:#111;padding:40px;border-radius:16px;width:90%;max-width:480px;box-shadow:0 10px 30px rgba(0,0,0,.6);border:1px solid #333;animation:popIn .3s cubic-bezier(.175,.885,.32,1.275)}
+        #title-popup-modal,#archive-title-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
+        #title-popup-modal.active,#archive-title-modal.active{display:flex}
+        .title-popup-content{background:#111;padding:24px 28px;border-radius:16px;width:90%;max-width:380px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.6);border:1px solid #333;animation:popIn .3s cubic-bezier(.175,.885,.32,1.275)}
+        .history-modal-content{background:#111;padding:20px;border-radius:16px;width:95%;max-width:800px;height:85vh;box-shadow:0 10px 30px rgba(0,0,0,.6);border:1px solid #333;animation:popIn .3s cubic-bezier(.175,.885,.32,1.275);display:flex;flex-direction:column}
+        .history-list-container{flex:1;overflow-y:auto;margin-top:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px;align-content:start}
+        .history-item{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:15px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;transition:background .2s;height:140px}
+        .history-item:hover{background:#222;border-color:#E6B800}
+        .history-item-info{display:flex;flex-direction:column;gap:5px}
+        .history-item-title{color:#fff;font-weight:600;font-size:1rem}
+        .history-item-date{color:#aaa;font-size:.8rem}
+        .history-item-count{color:#E6B800;font-size:.9rem;margin-top:auto}
+        .history-item-actions{display:flex;gap:8px;margin-top:10px}
+        .history-action-btn{flex:1;padding:6px;border-radius:6px;border:none;cursor:pointer;font-size:.8rem;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:5px}
+        .h-view{background:#333;color:#fff}.h-view:hover{background:#444}
+        .h-download{background:#E6B800;color:#3C0028}.h-download:hover{background:#d4a800}
+        .h-delete{background:#b71c1c;color:#fff}.h-delete:hover{filter:brightness(1.15)}
+        .history-view-content{background:#000;padding:0;border-radius:12px;width:95%;height:90vh;box-shadow:0 10px 30px rgba(0,0,0,.6);border:1px solid #333;display:flex;flex-direction:column;overflow:hidden}
+        .history-view-header{padding:15px 20px;background:#111;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center}
+        .history-view-title{color:#fff;font-weight:600}
+        .history-view-close{background:none;border:none;color:#aaa;font-size:1.5rem;cursor:pointer}
+        .history-table-container{flex:1;overflow:auto}
+        .form-title{font-size:1.6rem;margin-bottom:28px;text-align:center;color:#eee}
+        .form-group{margin-bottom:20px;position:relative}
+        label{display:block;margin-bottom:8px;font-size:.95rem;color:#ccc}
+        input[type="text"],input[type="tel"],input[type="number"],input[type="password"]{width:100%;padding:12px 16px;border:none;border-radius:8px;background:#222;color:#eee;font-size:1rem;transition:background .2s}
+        input:focus{outline:none;background:#2a2a2a;box-shadow:0 0 0 2px #555}
+        .gender-options{display:flex;gap:15px}
+        .gender-btn{flex:1;padding:12px;border-radius:8px;border:1px solid #333;background:#222;color:#aaa;font-size:1rem;cursor:pointer;transition:all .2s}
+        .gender-btn:hover{background:#2a2a2a;color:#fff}
+        .gender-btn.selected{background:#444;color:#fff;border-color:#666;box-shadow:0 0 0 2px #555}
+        .form-buttons{display:flex;gap:16px;margin-top:32px}
+        .submit-btn,.cancel-btn{flex:1;padding:14px;border:none;border-radius:10px;font-size:1.1rem;cursor:pointer;font-weight:600}
+        .submit-btn{background:#E6B800;color:#3C0028;transition:background .2s}.submit-btn:hover{background:#d4a800}
+        .cancel-btn{background:#222;color:#ccc;border:1px solid #333;transition:background .2s}.cancel-btn:hover{background:#333}
+        #detail-popup{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:250;backdrop-filter:blur(4px)}
+        #detail-popup.active{display:flex}
+        .popup-content{background:#111;border:1px solid #444;border-radius:12px;padding:18px;width:90%;max-width:300px;box-shadow:0 8px 25px rgba(0,0,0,.7);position:relative;animation:popIn .25s}
+        .popup-close{position:absolute;top:8px;right:12px;background:none;border:none;color:#aaa;font-size:1.5rem;cursor:pointer}
+        .popup-close:hover{color:#fff}
+        .popup-title{text-align:center;margin-bottom:16px;font-size:1.2rem;color:#eee}
+        .popup-field{margin-bottom:12px}
+        .popup-label{display:block;font-size:.85rem;color:#aaa;margin-bottom:4px}
+        .popup-value{background:#1a1a1a;padding:8px 10px;border-radius:6px;font-size:.95rem;color:#eee;word-break:break-word;line-height:1.3}
+        .popup-actions{margin-top:24px;display:flex;gap:12px}
+        .popup-actions button{flex:1;padding:12px;font-size:1rem;border:none;border-radius:8px;cursor:pointer;transition:all .2s;font-weight:600}
+        .popup-actions .delete-btn{background:#b71c1c;color:#fff}.popup-actions .delete-btn:hover{filter:brightness(1.15)}
+        .confirm-content{padding:24px 28px;max-width:380px;text-align:center}
+        .confirm-title{font-size:1.2rem;color:#eee;margin-bottom:18px;line-height:1.4}
+        .confirm-name{color:#E6B800;font-weight:600;word-break:break-word}
+        .confirm-buttons{display:flex;gap:16px;margin-top:24px}
+        .confirm-btn{flex:1;padding:12px;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s}
+        .confirm-yes{background:#b71c1c;color:#fff}.confirm-yes:hover{filter:brightness(1.15)}
+        .confirm-no{background:#E6B800;color:#3C0028}.confirm-no:hover{background:#d4a800}
+        .title-popup-content h3{margin-bottom:20px;color:#eee}
+        .title-popup-content input{margin-bottom:10px;text-align:center}
+        .title-popup-btns{display:flex;gap:12px;margin-top:20px}
+        .title-popup-btns button{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:600;transition:all .2s}
+        .title-download-btn{background:#E6B800;color:#3C0028}.title-download-btn:hover{background:#d4a800}
+        .title-cancel-btn{background:#333;color:#ddd}.title-cancel-btn:hover{background:#444}
+        .autocomplete-wrapper{position:relative;width:100%;margin-bottom:10px}
+        .autocomplete-dropdown{display:none;position:absolute;top:100%;left:0;width:100%;background:#222;border:1px solid #444;border-radius:8px;margin-top:2px;z-index:10;max-height:150px;overflow-y:auto;box-shadow:0 5px 15px rgba(0,0,0,.5)}
+        .autocomplete-dropdown.show{display:block}
+        .autocomplete-item{padding:10px 15px;cursor:pointer;text-align:left;color:#ddd;border-bottom:1px solid #333;transition:background .2s;font-size:.95rem}
+        .autocomplete-item:last-child{border-bottom:none}
+        .autocomplete-item:hover{background:#333;color:#E6B800}
+        #camera-modal{position:fixed;inset:0;background:#000;z-index:0;display:none;flex-direction:column;pointer-events:none}
+        #camera-modal.active{display:flex;pointer-events:auto}
+        #camera-feed{flex:1;width:100%;height:100%;object-fit:cover}
+        #reg-camera-modal{position:fixed;inset:0;background:#000;z-index:500;display:none;flex-direction:column}
+        #reg-camera-modal.active{display:flex}
+        #reg-camera-feed{width:100%;height:100%;object-fit:cover}
+        .reg-cam-close-btn{position:absolute;top:20px;right:20px;width:50px;height:50px;background:rgba(183,28,28,.9);color:#fff;border:none;border-radius:50%;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.5);z-index:10;transition:background .2s}
+        .reg-cam-close-btn:hover{background:#d32f2f}
+        .toast{position:fixed;background:rgba(51,51,51,.95);color:#fff;padding:15px 30px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,.5);font-size:1.1rem;font-weight:600;opacity:0;visibility:hidden;transition:.3s;z-index:600;text-align:center;pointer-events:none}
+        .toast.bottom-toast{bottom:30px;left:50%;transform:translateX(-50%)}
+        .toast.bottom-toast.show{opacity:1;visibility:visible}
+        .toast.center-toast{top:50%;left:50%;transform:translate(-50%,-50%)}
+        .toast.center-toast.show{opacity:1;visibility:visible}
+        #process-image{display:none}
+        @keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+        #app-lock-modal,#history-delete-modal{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px)}
+        .lock-content{background:#000;border:1px solid #333;border-radius:16px;padding:40px;text-align:center;width:90%;max-width:320px;box-shadow:0 10px 30px rgba(0,0,0,.8)}
+        .lock-title{color:#E6B800;font-size:1.4rem;margin-bottom:25px;font-weight:600}
+        #lock-input,#history-delete-input{width:100%;padding:12px;border-radius:8px;border:1px solid #E6B800;background:#111;color:#fff;font-size:1.2rem;text-align:center;margin-bottom:20px;letter-spacing:2px}
+        #lock-btn,#history-delete-btn{width:100%;padding:12px;border-radius:8px;border:none;background:#E6B800;color:#3C0028;font-size:1.1rem;font-weight:600;cursor:pointer;transition:.2s}
+        #lock-btn:active,#history-delete-btn:active{background:#c49a00;transform:scale(.98)}
+        #lock-error,#history-delete-error{color:#ff4d4d;margin-top:15px;font-size:.9rem;display:none}
+        #date-popup{position:fixed;background:#1a1a1a;border:1px solid #E6B800;border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;z-index:1000;box-shadow:0 4px 10px rgba(0,0,0,.5);display:none;pointer-events:none}
+        @media(max-width:600px){
+            .center{gap:80px}
+            .center .btn{width:90px;height:90px;font-size:38px}
+            .overlay-btn{width:45px;height:45px;font-size:16px}
+            .top-right .btn{width:45px;height:45px;font-size:18px}
+            .countdown{width:70px;height:70px;font-size:32px}
+            .table-container{padding:0 6px}
+            .form-container{padding:25px}
+            th,td{padding:8px 6px;font-size:.92rem}
+            .history-modal-content{width:100%;height:100%;border-radius:0}
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-lock-modal">
+        <div class="lock-content">
+            <div class="lock-title">Enter Password</div>
+            <input type="password" id="lock-input" placeholder="------" autofocus>
+            <button id="lock-btn">Unlock</button>
+            <div id="lock-error">Incorrect Password</div>
+        </div>
+    </div>
+
+    <div id="history-delete-modal" style="display:none">
+        <div class="lock-content">
+            <div class="lock-title">Enter Password</div>
+            <input type="password" id="history-delete-input" placeholder="------" autofocus>
+            <button id="history-delete-btn">Confirm Delete</button>
+            <div id="history-delete-error">Incorrect Password</div>
+        </div>
+    </div>
+
+    <div id="offline-badge" class="offline-badge"><i class="fa-solid fa-wifi-slash"></i> Offline</div>
+    <div id="sync-badge" class="sync-badge"><i class="fa-solid fa-rotate"></i> Syncing...</div>
+
+    <div class="top-left">
+        <div id="countdown-timer" class="countdown"><span id="countdown-number">20</span></div>
+    </div>
+
+    <div class="top-right">
+        <button class="btn" id="list-btn"><i class="fa-solid fa-list"></i></button>
+        <button class="btn" id="setting-btn"><i class="fa-solid fa-gear"></i></button>
+        <button class="btn" id="logout-btn" style="display:none"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+
+    <div id="settings-panel" class="settings-panel">
+        <div class="settings-header">
+            <span class="settings-title">Settings</span>
+            <button class="settings-close" id="settings-close-btn">&times;</button>
+        </div>
+        <div class="settings-body">
+            <div class="settings-menu-item" id="opt-history">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Student List History</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="center">
+        <button class="btn" id="toggle-scan-btn" title="Attendance Camera"><i class="fa-solid fa-camera"></i></button>
+        <button class="btn" id="file-btn" title="Attendance File Scan"><i class="fa-solid fa-file-image"></i></button>
+    </div>
+
+    <div id="list-overlay" class="list-overlay">
+        <div class="overlay-top-right">
+            <button class="overlay-btn" id="move-history-btn" title="Move to History"><i class="fa-solid fa-box-archive"></i></button>
+            <button class="overlay-btn" id="export-menu-btn" title="Export Options"><i class="fa-solid fa-download"></i></button>
+            <button class="overlay-btn" id="register-menu-btn"><i class="fa-solid fa-user-plus"></i></button>
+            <button class="overlay-btn" id="close-list"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="export-context-menu" class="context-menu">
+            <button class="menu-item" id="opt-docx"><i class="fa-solid fa-file-word"></i> DOCX</button>
+        </div>
+        <div id="reg-context-menu" class="context-menu">
+            <button class="menu-item" id="opt-manual"><i class="fa-solid fa-pen-to-square"></i> Manual Form</button>
+            <button class="menu-item" id="opt-qr-file"><i class="fa-solid fa-file-image"></i> QR File</button>
+            <button class="menu-item" id="opt-qr-camera"><i class="fa-solid fa-camera"></i> Camera Scan</button>
+        </div>
+        <div class="table-container">
+            <table id="main-table">
+                <thead><tr>
+                    <th>#</th><th>Full Name</th><th>Gender</th>
+                    <th>M1</th><th>M2</th><th>M3</th><th>M4</th><th>M5</th><th>M6</th><th>M7</th><th>M8</th><th>M9</th><th>M10</th>
+                    <th>M11</th><th>M12</th><th>M13</th><th>M14</th><th>M15</th><th>M16</th><th>M17</th><th>M18</th><th>M19</th><th>M20</th><th>M21</th><th>M22</th><th>M23</th><th>M24</th><th>M25</th><th>M26</th>
+                    <th>TM</th><th>%</th>
+                </tr></thead>
+                <tbody id="student-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="date-popup"></div>
+    <input type="file" id="qr-hidden-input" accept="image/*" style="display:none">
+    <img id="process-image" alt="" style="display:none">
+
+    <div id="form-modal" class="form-modal">
+        <div class="form-container">
+            <h2 class="form-title">Student Registration</h2>
+            <form id="student-form">
+                <div class="form-group"><input type="text" id="church-name" placeholder="Church Name"></div>
+                <div class="form-group"><input type="text" id="christ-name" placeholder="Christian Name"></div>
+                <div class="form-group"><input type="text" id="first-name" placeholder="First Name" required></div>
+                <div class="form-group"><input type="text" id="last-name" placeholder="Last Name" required></div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <div class="gender-options">
+                        <button type="button" class="gender-btn" data-value="Male">Male</button>
+                        <button type="button" class="gender-btn" data-value="Female">Female</button>
+                    </div>
+                    <input type="hidden" id="gender" required>
+                </div>
+                <div class="form-group"><input type="tel" id="phone" placeholder="Phone Number" required></div>
+                <div class="form-buttons">
+                    <button type="submit" class="submit-btn">Register</button>
+                    <button type="button" class="cancel-btn" id="cancel-register">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="detail-popup">
+        <div class="popup-content">
+            <button class="popup-close">&times;</button>
+            <h3 class="popup-title">Student Information</h3>
+            <div class="popup-field"><span class="popup-label">Church Name</span><div class="popup-value" id="detail-church"></div></div>
+            <div class="popup-field"><span class="popup-label">Christian Name</span><div class="popup-value" id="detail-christ"></div></div>
+            <div class="popup-field"><span class="popup-label">Full Name</span><div class="popup-value" id="detail-fullname"></div></div>
+            <div class="popup-field"><span class="popup-label">Gender</span><div class="popup-value" id="detail-gender"></div></div>
+            <div class="popup-field"><span class="popup-label">Phone</span><div class="popup-value" id="detail-phone"></div></div>
+            <div class="popup-field"><span class="popup-label">Date</span><div class="popup-value" id="detail-date"></div></div>
+            <div class="popup-field"><span class="popup-label">Time</span><div class="popup-value" id="detail-time"></div></div>
+            <div class="popup-actions">
+                <button type="button" id="popup-delete-btn" class="delete-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-modal">
+        <div class="confirm-content">
+            <div class="confirm-title" id="confirm-title-text">Are you sure you want to delete this student?<br><span class="confirm-name" id="confirm-student-name"></span></div>
+            <div class="confirm-buttons">
+                <button class="confirm-btn confirm-yes" id="confirm-yes-btn">Yes</button>
+                <button class="confirm-btn confirm-no" id="confirm-no-btn">No</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="title-popup-modal">
+        <div class="title-popup-content">
+            <h3 id="title-popup-header">Export Document</h3>
+            <div id="main-export-inputs">
+                <div class="autocomplete-wrapper">
+                    <input type="text" id="doc-page-title" placeholder="Enter Page Title" autocomplete="off">
+                    <div class="autocomplete-dropdown" id="recent-page-titles"></div>
+                </div>
+                <div class="autocomplete-wrapper">
+                    <input type="text" id="doc-file-title" placeholder="Enter File Name" autocomplete="off">
+                    <div class="autocomplete-dropdown" id="recent-file-titles"></div>
+                </div>
+            </div>
+            <input type="number" id="doc-percent-filter" placeholder="Min Percentage (e.g. 50)" value="0" min="0" max="100">
+            <div class="title-popup-btns">
+                <button class="title-cancel-btn" id="title-cancel-btn">Cancel</button>
+                <button class="title-download-btn" id="title-download-btn">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="archive-title-modal">
+        <div class="title-popup-content">
+            <h3>Save History</h3>
+            <input type="text" id="archive-title-input" placeholder="Enter List Title">
+            <div class="title-popup-btns">
+                <button class="title-cancel-btn" id="archive-cancel-btn">Cancel</button>
+                <button class="title-download-btn" id="archive-save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="history-modal">
+        <div class="history-modal-content">
+            <div class="settings-header">
+                <span class="settings-title">Student List History</span>
+                <button class="settings-close" id="history-close-btn">&times;</button>
+            </div>
+            <div class="history-list-container" id="history-list-container"></div>
+        </div>
+    </div>
+
+    <div id="history-view-modal">
+        <div class="history-view-content">
+            <div class="history-view-header">
+                <span class="history-view-title" id="h-view-title">Archived List</span>
+                <button class="history-view-close" id="history-view-close-btn">&times;</button>
+            </div>
+            <div class="history-table-container" id="history-table-container"></div>
+        </div>
+    </div>
+
+    <div id="camera-modal">
+        <video id="camera-feed" autoplay playsinline muted></video>
+        <canvas id="camera-canvas" style="display:none"></canvas>
+    </div>
+
+    <div id="reg-camera-modal">
+        <video id="reg-camera-feed" autoplay playsinline muted></video>
+        <button class="reg-cam-close-btn" id="reg-cam-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        <canvas id="reg-camera-canvas" style="display:none"></canvas>
+    </div>
+
+    <div id="toast" class="toast">Action Successful</div>
+
+    <script type="module">
+        // ========== FIREBASE — DYNAMIC LOADING ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDhtyvb1nQSd2wdXWG3vvC9WL01QwlQk8",
+            authDomain: "attendance-system-14d2b.firebaseapp.com",
+            databaseURL: "https://attendance-system-14d2b-default-rtdb.firebaseio.com",
+            projectId: "attendance-system-14d2b",
+            storageBucket: "attendance-system-14d2b.firebasestorage.app",
+            messagingSenderId: "767051801951",
+            appId: "1:767051801951:web:84732e5d5060244d1cc2ea",
+            measurementId: "G-LJW36WPZJ4"
+        };
+
+        let fb = null;
+        let fbReady = false;
+
+        async function loadFirebase() {
+            try {
+                const fa = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+                const fdb = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js");
+                const fAuth = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
+                const app = fa.initializeApp(firebaseConfig);
+                const db = fdb.getDatabase(app);
+                const auth = fAuth.getAuth(app);
+                fb = {
+                    ref: fdb.ref, push: fdb.push, onValue: fdb.onValue, remove: fdb.remove,
+                    update: fdb.update, get: fdb.get, db, auth,
+                    signIn: fAuth.signInWithEmailAndPassword, signOut: fAuth.signOut, onAuth: fAuth.onAuthStateChanged,
+                    recordsRef: fdb.ref(db, 'users'), historyRef: fdb.ref(db, 'history')
+                };
+                fbReady = true;
+                console.log('[FB] Firebase loaded OK');
+                return true;
+            } catch (err) {
+                console.warn('[FB] Firebase load failed:', err.message);
+                fbReady = false;
+                return false;
+            }
+        }
+
+        function fbRef(path) { return fbReady ? fb.ref(fb.db, path) : null; }
+
+        // ========== STATUS BADGES ==========
+        const offlineBadge = document.getElementById('offline-badge');
+        const syncBadge = document.getElementById('sync-badge');
+        function updateBadges() { if (navigator.onLine) offlineBadge.classList.remove('active'); else { offlineBadge.classList.add('active'); syncBadge.classList.remove('active'); } }
+        updateBadges();
+
+        // ========== UTILITIES ==========
+        const animateButton = b => { b.style.transform = 'scale(0.92)'; setTimeout(() => b.style.transform = '', 140); };
+        const vibrate = d => { if ('vibrate' in navigator) navigator.vibrate(d || 30); };
+        const showToast = (msg, center) => { const t = document.getElementById('toast'); t.textContent = msg; t.classList.remove('bottom-toast', 'center-toast'); t.classList.add(center ? 'center-toast' : 'bottom-toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500); };
+
+        // ========== ELEMENTS ==========
+        const toggleScanBtn = document.getElementById('toggle-scan-btn');
+        const fileBtn = document.getElementById('file-btn');
+        const iconCamera = '<i class="fa-solid fa-camera"></i>';
+        const iconStop = '<i class="fa-solid fa-stop"></i>';
+        const countdownEl = document.getElementById('countdown-timer');
+        const countdownNumber = document.getElementById('countdown-number');
+        let countdownInterval = null, currentAttendanceMark = null, markedThisMark = new Set(), isAttendanceOpen = false;
+        const listOverlay = document.getElementById('list-overlay'), exportContextMenu = document.getElementById('export-context-menu'), exportMenuBtn = document.getElementById('export-menu-btn');
+        const regContextMenu = document.getElementById('reg-context-menu'), regMenuBtn = document.getElementById('register-menu-btn');
+        const qrHiddenInput = document.getElementById('qr-hidden-input'), processImage = document.getElementById('process-image');
+        const formModal = document.getElementById('form-modal'), studentForm = document.getElementById('student-form'), tableBody = document.getElementById('student-table-body');
+        const genderBtns = document.querySelectorAll('.gender-btn'), genderInput = document.getElementById('gender');
+        const detailPopup = document.getElementById('detail-popup'), confirmModal = document.getElementById('confirm-modal');
+        const confirmStudentName = document.getElementById('confirm-student-name'), confirmYesBtn = document.getElementById('confirm-yes-btn'), confirmNoBtn = document.getElementById('confirm-no-btn');
+        const settingsPanel = document.getElementById('settings-panel'), settingsCloseBtn = document.getElementById('settings-close-btn'), settingBtn = document.getElementById('setting-btn');
+        const optHistory = document.getElementById('opt-history'), historyModal = document.getElementById('history-modal'), historyCloseBtn = document.getElementById('history-close-btn');
+        const historyListContainer = document.getElementById('history-list-container'), moveHistoryBtn = document.getElementById('move-history-btn');
+        const historyViewModal = document.getElementById('history-view-modal'), historyViewCloseBtn = document.getElementById('history-view-close-btn');
+        const historyViewTitle = document.getElementById('h-view-title'), historyTableContainer = document.getElementById('history-table-container');
+        const titlePopupModal = document.getElementById('title-popup-modal'), docPageTitleInput = document.getElementById('doc-page-title');
+        const docFileTitleInput = document.getElementById('doc-file-title'), docPercentFilterInput = document.getElementById('doc-percent-filter');
+        const titleDownloadBtn = document.getElementById('title-download-btn'), titleCancelBtn = document.getElementById('title-cancel-btn');
+        const cameraModal = document.getElementById('camera-modal'), cameraFeed = document.getElementById('camera-feed'), cameraCanvas = document.getElementById('camera-canvas');
+        const archiveTitleModal = document.getElementById('archive-title-modal'), archiveTitleInput = document.getElementById('archive-title-input');
+        const archiveSaveBtn = document.getElementById('archive-save-btn'), archiveCancelBtn = document.getElementById('archive-cancel-btn');
+        const regCameraModal = document.getElementById('reg-camera-modal'), regCameraFeed = document.getElementById('reg-camera-feed');
+        const regCameraCanvas = document.getElementById('reg-camera-canvas'), regCamCloseBtn = document.getElementById('reg-cam-close-btn');
+        const datePopup = document.getElementById('date-popup'), historyDeleteModal = document.getElementById('history-delete-modal');
+        const historyDeleteInput = document.getElementById('history-delete-input'), historyDeleteBtn = document.getElementById('history-delete-btn');
+        const historyDeleteError = document.getElementById('history-delete-error');
+        let videoStream = null, regVideoStream = null, isAttendanceScan = false, selectedDetailRow = null, pendingDeleteRow = null;
+        let afterConfirmAction = null, currentExportType = 'docx', currentHistoryExportId = null, pendingDeleteHistoryId = null;
+        let unsubscribeRecords = null, unsubscribeHistory = null;
+
+        // ========== AUTH ==========
+        const appLockModal = document.getElementById('app-lock-modal');
+        const lockInput = document.getElementById('lock-input');
+        const lockBtn = document.getElementById('lock-btn');
+        const lockError = document.getElementById('lock-error');
+        const logoutBtn = document.getElementById('logout-btn');
+        const EMAIL = 'attendance@system.com';
+
+        // ========== TABLE HELPERS ==========
+        function buildStudentObj(row) { const marks = []; for (let i = 3; i <= 28; i++) marks.push({ html: row.cells[i].innerHTML, value: row.cells[i].dataset.value || '', title: row.cells[i].title || '', date: row.cells[i].dataset.date || '' }); return { name: row.cells[1].textContent, gender: row.cells[2].textContent, church: row.dataset.church || '', christ: row.dataset.christ || '', fullname: row.dataset.fullname || '', phone: row.dataset.phone || '', date: row.dataset.date || '', time: row.dataset.time || '', startMark: row.dataset.startMark || 1, marks, total: row.cells[29].textContent, percent: row.cells[30].textContent }; }
+        function populateTable(data) { tableBody.innerHTML = ''; let c = 1; Object.keys(data).forEach(key => { const s = data[key]; if (s === null) return; const row = document.createElement('tr'); let mh = ''; (s.marks || []).forEach(m => { mh += `<td data-value="${m.value||''}" title="${m.title||''}" data-date="${m.date||''}">${m.html||''}</td>`; }); for (let i = (s.marks||[]).length; i < 26; i++) mh += '<td></td>'; row.innerHTML = `<td>${c}</td><td>${s.name}</td><td>${s.gender}</td>${mh}<td>${s.total}</td><td>${s.percent}</td>`; row.dataset.id = key; row.dataset.church = s.church||''; row.dataset.christ = s.christ||''; row.dataset.fullname = s.fullname||''; row.dataset.gender = s.gender||''; row.dataset.phone = s.phone||''; row.dataset.date = s.date||''; row.dataset.time = s.time||''; row.dataset.startMark = s.startMark||1; tableBody.appendChild(row); c++; }); updateAllTotals(); }
+        function updateAllTotals() { document.querySelectorAll('#student-table-body tr').forEach(r => updateTotals(r)); }
+        function updateTotals(row) { let t = 0; for (let i = 3; i <= 28; i++) t += parseInt(row.cells[i].dataset.value || '0'); row.cells[29].textContent = t; row.cells[29].style.color = '#00ff9d'; const mx = getCurrentMaxAttendanceMark() * 4; row.cells[30].textContent = mx > 0 ? ((t / mx) * 100).toFixed(1) : '0'; row.cells[30].style.color = '#00ff9d'; }
+        function getCurrentMaxAttendanceMark() { let mx = 0; document.querySelectorAll('#student-table-body tr').forEach(r => { for (let m = 1; m <= 26; m++) { if (r.cells[2+m] && r.cells[2+m].textContent.trim() !== '' && m > mx) mx = m; } }); return mx; }
+        function checkIfAnyMarksExist() { let s = 0; document.querySelectorAll('#student-table-body tr').forEach(r => { s += parseInt(r.cells[29].textContent) || 0; }); return s > 0; }
+        function setMarkDisplay(cell, val) { const colors = { 4: '#2196F3', 3: '#00ff9d', 2: '#FFEB3B', 1: '#E91E63', 0: '#ff4d4d' }; cell.innerHTML = `<span style="color:${colors[val]||'#fff'};font-size:1.2rem;font-weight:bold">${val}</span>`; cell.dataset.value = val; if (val > 0) cell.dataset.date = new Date().toISOString(); }
+        function findStudentRow(name) { const n = name.toLowerCase().trim(); for (const r of document.querySelectorAll('#student-table-body tr')) { if (r.cells[1].textContent.trim().toLowerCase() === n) return r; } return null; }
+        function updateRowNumbers() { document.querySelectorAll('#student-table-body tr').forEach((r, i) => r.cells[0].textContent = i + 1); }
+        function sortTableAndNumbers() { const rows = Array.from(tableBody.querySelectorAll('tr')); rows.sort((a, b) => a.cells[1].textContent.trim().toLowerCase().localeCompare(b.cells[1].textContent.trim().toLowerCase())); rows.forEach(r => tableBody.appendChild(r)); updateRowNumbers(); }
+        function markNextAvailableMark(row) { if (!row) return; let tm; if (isAttendanceOpen && currentAttendanceMark) tm = currentAttendanceMark; else tm = getCurrentMaxAttendanceMark() + 1; if (tm > 26) { showToast("All 26 marks filled", true); return; } const cell = row.cells[2+tm]; if (!cell) return; if (!cell.dataset.value) { const tl = parseInt(countdownNumber.textContent); const sc = tl > 15 ? 4 : tl > 10 ? 3 : tl > 5 ? 2 : 1; setMarkDisplay(cell, sc); cell.title = `Mark ${tm}: Score ${sc}`; cell.classList.add('mark-cell'); cell.classList.remove('disabled'); showToast(`Mark ${tm}: Score ${sc}`, true); vibrate(300); updateTotals(row); saveData(); } else showToast(`Already marked M${tm}`, true); }
+        function genKey() { if (fbReady) return fb.push(fb.recordsRef).key; const c = new Uint8Array(20); crypto.getRandomValues(c); let r = ''; const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; for (let i = 0; i < 20; i++) r += chars[c[i] % chars.length]; return r; }
+
+        // ========== COUNTDOWN ==========
+        function saveCountdownEnd(end) { localStorage.setItem('countdownEndTime', end); }
+        function clearCountdownEnd() { localStorage.removeItem('countdownEndTime'); }
+        function getRemaining() { const e = localStorage.getItem('countdownEndTime'); if (!e) return 0; const d = Math.floor((parseInt(e) - Date.now()) / 1000); return d > 0 ? d : 0; }
+        function startCountdown(resumed) { if (countdownInterval || isAttendanceOpen) return; isAttendanceOpen = true; saveCountdownEnd(Date.now() + ((resumed != null ? resumed : 20) * 1000)); let tl = getRemaining(); countdownNumber.textContent = tl; countdownEl.classList.add('active'); countdownEl.classList.remove('warning'); countdownInterval = setInterval(() => { tl = getRemaining(); countdownNumber.textContent = tl; if (tl <= 5) countdownEl.classList.add('warning'); if (tl <= 0) { stopCountdown(); showToast(`Mark ${currentAttendanceMark} ended`, true); markAbsentAfterTimeout(); markedThisMark.clear(); saveData(); } }, 1000); }
+        function stopCountdown() { if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; } isAttendanceOpen = false; clearCountdownEnd(); countdownEl.classList.remove('active', 'warning'); }
+        countdownEl.addEventListener('dblclick', () => { if (isAttendanceOpen) { stopCountdown(); showToast(`Mark ${currentAttendanceMark} stopped`, true); markAbsentAfterTimeout(); } });
+        function markAbsentAfterTimeout() { if (!currentAttendanceMark) return; const mn = currentAttendanceMark; let any = false; document.querySelectorAll('#student-table-body tr').forEach(r => { if (parseInt(r.dataset.startMark || 1) <= mn) { const c = r.cells[2+mn]; if (c && c.innerHTML.trim() === '') { setMarkDisplay(c, 0); c.title = `Absent on Mark ${mn}`; c.classList.add('mark-cell'); c.classList.remove('disabled'); updateTotals(r); any = true; } } }); if (any) showToast("Missing marked 0", true); saveData(); }
+        function saveAttState() { if (isAttendanceOpen && currentAttendanceMark) localStorage.setItem('attendanceState', JSON.stringify({ isOpen: true, currentMark: currentAttendanceMark, markedSet: Array.from(markedThisMark) })); }
+
+        // ========== LOAD DATA ==========
+        function loadFromLocalStorage() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('attendance_students') || '{}');
+                if (Object.keys(saved).length > 0) {
+                    populateTable(saved);
+                } else {
+                    tableBody.innerHTML = '';
+                }
+            } catch(e) {
+                tableBody.innerHTML = '';
+            }
+        }
+
+        function loadFirebaseData() {
+            loadFromLocalStorage();
+            if (!fbReady || !navigator.onLine) return;
+            if (unsubscribeRecords) { try { unsubscribeRecords(); } catch(e) {} }
+            unsubscribeRecords = fb.onValue(fb.recordsRef, (snap) => {
+                if (snap.exists()) {
+                    const data = snap.val();
+                    const clean = {};
+                    let hasData = false;
+                    for (const [k, v] of Object.entries(data)) {
+                        if (v !== null) { clean[k] = v; hasData = true; }
+                    }
+                    if (hasData) {
+                        populateTable(clean);
+                        localStorage.setItem('attendance_students', JSON.stringify(clean));
+                        localStorage.setItem('attendance_deleted', '[]');
+                    }
+                }
+            }, (err) => { console.error("Firebase read error:", err); });
+        }
+
+        // ========== SAVE DATA ==========
+        function saveData() {
+            const rows = document.querySelectorAll('#student-table-body tr');
+            const data = {};
+            rows.forEach(r => {
+                const k = r.dataset.id;
+                if (k) data[k] = buildStudentObj(r);
+            });
+
+            localStorage.setItem('attendance_students', JSON.stringify(data));
+            saveAttState();
+
+            if (navigator.onLine && fbReady) {
+                fb.update(fb.recordsRef, data).catch(err => console.error("Firebase save error:", err));
+
+                const deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
+                if (deletedKeys.length > 0) {
+                    const upd = {};
+                    deletedKeys.forEach(k => { upd[k] = null; });
+                    fb.update(fb.recordsRef, upd).then(() => {
+                        localStorage.setItem('attendance_deleted', '[]');
+                    }).catch(err => {
+                        console.error("Firebase deletion sync error:", err);
+                    });
+                }
+            }
+        }
+
+        // ========== SYNC LOGIC ==========
+        async function syncLocalToCloud() {
+            if (!fbReady || !navigator.onLine) return;
+
+            syncBadge.classList.add('active');
+            console.log("[Sync] Starting upload...");
+
+            try {
+                const localData = JSON.parse(localStorage.getItem('attendance_students') || '{}');
+                if (Object.keys(localData).length > 0) {
+                    await fb.update(fb.recordsRef, localData);
+                    console.log("[Sync] Students uploaded.");
+                }
+
+                const deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
+                if (deletedKeys.length > 0) {
+                    const upd = {};
+                    deletedKeys.forEach(k => { upd[k] = null; });
+                    await fb.update(fb.recordsRef, upd);
+                    localStorage.setItem('attendance_deleted', '[]');
+                    console.log("[Sync] Deletions synced.");
+                }
+
+                syncHistoryToFirebase();
+
+            } catch(e) {
+                console.error("[Sync] Upload failed:", e);
+            }
+            
+            syncBadge.classList.remove('active');
+        }
+
+        function syncHistoryToFirebase() {
+            if (!fbReady || !navigator.onLine) return;
+            const pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
+            pending.forEach(entry => {
+                fb.push(fb.historyRef, entry);
+            });
+            if (pending.length > 0) {
+                localStorage.setItem('attendance_pending_history', '[]');
+                console.log("[Sync] History uploaded.");
+            }
+        }
+
+        // ========== HISTORY ==========
+        function loadHistoryFromLocalStorage() {
+            try {
+                const arr = JSON.parse(localStorage.getItem('attendance_history') || '[]');
+                if (arr.length > 0) {
+                    const data = {};
+                    arr.forEach(h => { data[h.firebaseKey] = h; });
+                    renderHistory(data);
+                } else {
+                    renderHistory({});
+                }
+            } catch(e) {
+                renderHistory({});
+            }
+        }
+
+        function loadHistoryFromFirebase() {
+            loadHistoryFromLocalStorage();
+
+            if (!fbReady || !navigator.onLine) return;
+
+            if (unsubscribeHistory) { try { unsubscribeHistory(); } catch(e) {} }
+
+            unsubscribeHistory = fb.onValue(fb.historyRef, (snap) => {
+                if (snap.exists()) {
+                    const data = snap.val();
+                    renderHistory(data);
+                    const arr = [];
+                    for (const [k, v] of Object.entries(data)) {
+                        if (v !== null) arr.push({ firebaseKey: k, ...v });
+                    }
+                    localStorage.setItem('attendance_history', JSON.stringify(arr));
+                    syncHistoryToFirebase();
+                }
+            }, (err) => { console.error("Firebase history error:", err); });
+        }
+
+        function renderHistory(data) {
+            historyListContainer.innerHTML = '';
+            const entries = Object.entries(data).sort((a, b) => new Date(b[1].date) - new Date(a[1].date));
+            if (!entries.length) { historyListContainer.innerHTML = '<div style="text-align:center;color:#aaa;margin-top:50px;grid-column:1/-1">No history found.</div>'; return; }
+            entries.forEach(([key, item]) => {
+                const d = document.createElement('div'); d.className = 'history-item';
+                d.innerHTML = `<div class="history-item-info"><span class="history-item-title">${item.title}</span><span class="history-item-date">${new Date(item.date).toLocaleString()}</span><span class="history-item-count">${item.count} Students</span></div><div class="history-item-actions"><button class="history-action-btn h-view" data-key="${key}"><i class="fa-solid fa-eye"></i> View</button><button class="history-action-btn h-download" data-key="${key}"><i class="fa-solid fa-download"></i></button><button class="history-action-btn h-delete" data-key="${key}"><i class="fa-solid fa-trash"></i></button></div>`;
+                d.querySelector('.h-view').addEventListener('click', e => { e.stopPropagation(); viewHistory(key, item); });
+                d.querySelector('.h-delete').addEventListener('click', e => { e.stopPropagation(); pendingDeleteHistoryId = key; historyDeleteInput.value = ''; historyDeleteError.style.display = 'none'; historyDeleteModal.style.display = 'flex'; historyDeleteInput.focus(); });
+                d.querySelector('.h-download').addEventListener('click', e => { e.stopPropagation(); currentHistoryExportId = key; currentExportType = 'docx'; docPageTitleInput.value = item.title; docFileTitleInput.value = item.title.replace(/[^a-z0-9]/gi, '_'); docPercentFilterInput.value = '0'; document.getElementById('title-popup-header').textContent = "Export " + item.title; document.getElementById('main-export-inputs').style.display = 'none'; titlePopupModal.classList.add('active'); docPercentFilterInput.focus(); });
+                historyListContainer.appendChild(d);
+            });
+        }
+
+        function viewHistory(key, item) {
+            historyViewTitle.textContent = item.title;
+            let h = '<table style="width:max-content;min-width:100%"><thead><tr><th>#</th><th>Full Name</th><th>Gender</th>';
+            for (let i = 1; i <= 26; i++) h += `<th>M${i}</th>`; h += '<th>TM</th><th>%</th></tr></thead><tbody>';
+            item.data.forEach((s, i) => { h += `<tr><td>${i+1}</td><td style="text-align:left;padding-left:10px">${s.name}</td><td>${s.gender}</td>${s.marks.map(m=>`<td>${m}</td>`).join('')}<td style="color:#00ff9d;font-weight:bold">${s.total}</td><td style="color:#00ff9d;font-weight:bold">${String(s.percent).replace('%','')}</td></tr>`; });
+            h += '</tbody></table>'; historyTableContainer.innerHTML = h; historyViewModal.classList.add('active');
+        }
+
+        historyDeleteBtn.addEventListener('click', async () => {
+            vibrate(30);
+            if (historyDeleteInput.value === 'Debebe!') {
+                historyDeleteModal.style.display = 'none';
+                if (pendingDeleteHistoryId) {
+                    if (navigator.onLine && fbReady) {
+                        try { await fb.remove(fbRef(`history/${pendingDeleteHistoryId}`)); showToast("History deleted"); } catch(e) { showToast("Error deleting"); }
+                    } else {
+                        let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
+                        hist = hist.filter(h => h.firebaseKey !== pendingDeleteHistoryId);
+                        localStorage.setItem('attendance_history', JSON.stringify(hist));
+                        showToast("History deleted offline");
+                    }
+                    pendingDeleteHistoryId = null;
+                }
+            } else { historyDeleteError.style.display = 'block'; historyDeleteInput.value = ''; historyDeleteInput.focus(); }
+        });
+        historyDeleteInput.addEventListener('keyup', e => { if (e.key === 'Enter') historyDeleteBtn.click(); });
+        historyDeleteModal.addEventListener('click', e => { if (e.target === historyDeleteModal) historyDeleteModal.style.display = 'none'; });
+
+        // ========== MOVE TO HISTORY ==========
+        moveHistoryBtn.addEventListener('click', () => {
+            vibrate(30); if (!tableBody.querySelectorAll('tr').length) { showToast("No students"); return; }
+            if (!checkIfAnyMarksExist()) { showToast("No attendance data"); return; }
+            document.getElementById('confirm-title-text').innerHTML = "Move current marks to History?"; confirmStudentName.textContent = "Data will be reset.";
+            afterConfirmAction = () => { document.getElementById('confirm-title-text').innerHTML = "Are you sure?<br><span class='confirm-name' id='confirm-student-name'></span>"; archiveTitleInput.value = ""; archiveTitleModal.classList.add('active'); archiveTitleInput.focus(); };
+            confirmModal.classList.add('active');
+        });
+        archiveSaveBtn.addEventListener('click', () => { vibrate(30); if (!archiveTitleInput.value.trim()) { showToast("Enter text"); return; } archiveTitleModal.classList.remove('active'); doMoveToHistory(archiveTitleInput.value.trim()); });
+        archiveCancelBtn.addEventListener('click', () => archiveTitleModal.classList.remove('active'));
+
+        async function doMoveToHistory(title) {
+            showToast("Archiving...");
+            const arr = []; tableBody.querySelectorAll('tr').forEach(r => { const s = { name: r.cells[1].textContent, gender: r.cells[2].textContent, marks: [], total: r.cells[29].textContent, percent: r.cells[30].textContent, church: r.dataset.church, christ: r.dataset.christ, phone: r.dataset.phone }; for (let i = 1; i <= 26; i++) s.marks.push(r.cells[2+i].textContent.trim()); arr.push(s); });
+            const entry = { id: Date.now(), title, date: new Date().toISOString(), count: arr.length, data: arr };
+
+            let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
+            hist.push({ firebaseKey: 'local_' + entry.id, ...entry });
+            localStorage.setItem('attendance_history', JSON.stringify(hist));
+
+            if (navigator.onLine && fbReady) {
+                try { await fb.push(fb.historyRef, entry); showToast("Moved to History!"); } catch(e) {
+                    let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
+                    pending.push(entry);
+                    localStorage.setItem('attendance_pending_history', JSON.stringify(pending));
+                    showToast("Queued for sync", true);
+                }
+            } else {
+                let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
+                pending.push(entry);
+                localStorage.setItem('attendance_pending_history', JSON.stringify(pending));
+                showToast("Queued for sync", true);
+            }
+
+            tableBody.querySelectorAll('tr').forEach(r => { for (let i = 3; i <= 28; i++) { r.cells[i].innerHTML = ''; r.cells[i].classList.remove('mark-cell', 'disabled'); r.cells[i].dataset.value = ''; r.cells[i].title = ''; r.cells[i].dataset.date = ''; } r.cells[29].textContent = '0'; r.cells[30].textContent = '0'; r.dataset.startMark = "1"; });
+            currentAttendanceMark = null; markedThisMark.clear(); isAttendanceOpen = false; stopCountdown(); saveData();
+        }
+
+        // ========== CONFIRM / DELETE ==========
+        function showConfirm(row, name) { pendingDeleteRow = row; document.getElementById('confirm-title-text').innerHTML = "Delete this student?<br>"; confirmStudentName.textContent = name; confirmModal.classList.add('active'); }
+        function hideConfirm() { confirmModal.classList.remove('active'); pendingDeleteRow = null; afterConfirmAction = null; }
+        confirmYesBtn.onclick = () => { if (afterConfirmAction) afterConfirmAction(); hideConfirm(); saveData(); };
+        confirmNoBtn.onclick = hideConfirm;
+        document.getElementById('popup-delete-btn').addEventListener('click', () => {
+            if (!selectedDetailRow) return;
+            const name = selectedDetailRow.cells[1].textContent.trim();
+            detailPopup.classList.remove('active'); showConfirm(selectedDetailRow, name);
+            afterConfirmAction = () => {
+                const deletedKey = selectedDetailRow.dataset.id;
+                selectedDetailRow.remove();
+                sortTableAndNumbers();
+
+                let deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
+                if (deletedKey && !deletedKeys.includes(deletedKey)) {
+                    deletedKeys.push(deletedKey);
+                }
+                localStorage.setItem('attendance_deleted', JSON.stringify(deletedKeys));
+                saveData();
+
+                if (navigator.onLine && fbReady && deletedKey) {
+                    fb.update(fb.recordsRef, { [deletedKey]: null }).then(() => {
+                        deletedKeys = deletedKeys.filter(k => k !== deletedKey);
+                        localStorage.setItem('attendance_deleted', JSON.stringify(deletedKeys));
+                    });
+                }
+
+                showToast("Student deleted");
+                selectedDetailRow = null;
+            };
+        });
+        detailPopup.querySelector('.popup-close').addEventListener('click', () => detailPopup.classList.remove('active'));
+
+        // ========== GENDER BUTTONS ==========
+        genderBtns.forEach(b => b.addEventListener('click', function () { genderBtns.forEach(x => x.classList.remove('selected')); this.classList.add('selected'); genderInput.value = this.dataset.value; }));
+
+        // ========== REGISTRATION FORM ==========
+        studentForm.addEventListener('submit', e => {
+            e.preventDefault(); vibrate(300);
+            const church = document.getElementById('church-name').value.trim(), christ = document.getElementById('christ-name').value.trim();
+            const first = document.getElementById('first-name').value.trim(), last = document.getElementById('last-name').value.trim();
+            const gender = genderInput.value, phone = document.getElementById('phone').value.trim();
+            if (!first || !last || !gender) { showToast("Fill required fields!"); return; }
+            if (findStudentRow(`${first} ${last}`)) { showToast("Already registered!"); return; }
+            const now = new Date(), sm = getCurrentMaxAttendanceMark() + 1;
+            const row = document.createElement('tr'); let mh = ''; for (let i = 1; i <= 26; i++) mh += '<td></td>';
+            row.innerHTML = `<td></td><td>${first} ${last}</td><td>${gender.charAt(0)}</td>${mh}<td>0</td><td>0</td>`;
+            row.dataset.church = church; row.dataset.christ = christ; row.dataset.fullname = `${first} ${last}`; row.dataset.gender = gender; row.dataset.phone = phone;
+            row.dataset.date = now.toLocaleDateString('en-GB'); row.dataset.time = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }); row.dataset.startMark = sm;
+            row.dataset.id = genKey();
+            for (let m = 1; m < sm; m++) { const c = row.cells[2+m]; setMarkDisplay(c, 0); c.title = `Absent Mark ${m} (Late)`; c.classList.add('mark-cell', 'disabled'); }
+            tableBody.appendChild(row); sortTableAndNumbers(); updateTotals(row); saveData();
+            formModal.classList.remove('active'); showToast(`Registered (Start M${sm})`);
+            studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = "";
+        });
+
+        // ========== UI BUTTONS ==========
+        document.getElementById('list-btn').addEventListener('click', function () { vibrate(30); listOverlay.classList.add('active'); history.pushState({ page: 'list' }, ''); animateButton(this); regContextMenu.classList.remove('active'); exportContextMenu.classList.remove('active'); });
+        settingBtn.addEventListener('click', function (e) { e.stopPropagation(); vibrate(30); settingsPanel.classList.toggle('active'); });
+        settingsCloseBtn.addEventListener('click', () => settingsPanel.classList.remove('active'));
+        optHistory.addEventListener('click', () => { vibrate(30); settingsPanel.classList.remove('active'); historyModal.classList.add('active'); history.pushState({ page: 'history' }, ''); });
+        historyCloseBtn.addEventListener('click', () => historyModal.classList.remove('active'));
+        historyViewCloseBtn.addEventListener('click', () => historyViewModal.classList.remove('active'));
+        document.getElementById('close-list').addEventListener('click', () => { vibrate(30); listOverlay.classList.remove('active'); });
+        exportMenuBtn.addEventListener('click', function (e) { e.stopPropagation(); e.preventDefault(); vibrate(30); animateButton(this); exportContextMenu.style.top = '80px'; exportContextMenu.style.right = '75px'; exportContextMenu.style.left = 'auto'; exportContextMenu.classList.toggle('active'); regContextMenu.classList.remove('active'); });
+        regMenuBtn.addEventListener('click', function (e) { e.stopPropagation(); e.preventDefault(); vibrate(30); animateButton(this); regContextMenu.style.top = '80px'; regContextMenu.style.right = '20px'; regContextMenu.style.left = 'auto'; regContextMenu.classList.toggle('active'); exportContextMenu.classList.remove('active'); });
+        document.getElementById('cancel-register').addEventListener('click', () => formModal.classList.remove('active'));
+        document.getElementById('opt-manual').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); formModal.classList.add('active'); studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = ""; });
+        document.getElementById('opt-qr-file').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); isAttendanceScan = false; qrHiddenInput.click(); });
+        document.getElementById('opt-qr-camera').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); isAttendanceScan = false; openRegCam(); });
+        document.addEventListener('click', e => { if (exportContextMenu.classList.contains('active') && !exportContextMenu.contains(e.target) && e.target !== exportMenuBtn && !exportMenuBtn.contains(e.target)) exportContextMenu.classList.remove('active'); if (regContextMenu.classList.contains('active') && !regContextMenu.contains(e.target) && e.target !== regMenuBtn && !regMenuBtn.contains(e.target)) regContextMenu.classList.remove('active'); if (settingsPanel.classList.contains('active') && !settingsPanel.contains(e.target) && e.target !== settingBtn && !settingBtn.contains(e.target)) settingsPanel.classList.remove('active'); });
+
+        // ========== TABLE DOUBLE-CLICK ==========
+        tableBody.addEventListener('dblclick', function (e) {
+            const td = e.target.closest('td');
+            if (td && td.cellIndex === 1) { const r = td.closest('tr'); selectedDetailRow = r; document.getElementById('detail-church').textContent = r.dataset.church || "--"; document.getElementById('detail-christ').textContent = r.dataset.church || "--"; document.getElementById('detail-fullname').textContent = r.dataset.fullname || "--"; document.getElementById('detail-gender').textContent = r.dataset.gender || "--"; document.getElementById('detail-phone').textContent = r.dataset.phone || "--"; document.getElementById('detail-date').textContent = r.dataset.date || "--"; document.getElementById('detail-time').textContent = r.dataset.time || "--"; detailPopup.classList.add('active'); return; }
+            if (td && td.cellIndex >= 3 && td.cellIndex <= 28) { const v = td.dataset.value, r = td.closest('tr'), cm = td.cellIndex - 2, ss = parseInt(r.dataset.startMark || 1); if (cm < ss) { showToast(`Cannot change Mark ${cm}`); return; } if (v === '0') { const gm = getCurrentMaxAttendanceMark(), am = currentAttendanceMark || gm; if (cm === am || isAttendanceOpen) { setMarkDisplay(td, 2); td.querySelector('span').style.color = '#fff'; td.title = `Permission Mark ${cm}`; updateTotals(r); saveData(); showToast("Changed to Permission"); } else showToast("Can only change latest mark"); } }
+        });
+        document.querySelector('thead').addEventListener('dblclick', function (e) {
+            const th = e.target.closest('th');
+            if (th && th.textContent.startsWith('M') && th.textContent !== 'TM') { const mn = parseInt(th.textContent.substring(1)); if (!isNaN(mn)) { const dates = {}; document.querySelectorAll('#student-table-body tr').forEach(r => { const c = r.cells[2+mn]; if (c && c.dataset.date) { const d = new Date(c.dataset.date).toLocaleDateString(); dates[d] = (dates[d] || 0) + 1; } }); const ent = Object.entries(dates); datePopup.innerHTML = ent.length === 0 ? "No data M" + mn : `<strong>M${mn} Dates:</strong><br>` + ent.map(([d, c]) => `${d} (${c})`).join('<br>'); const rect = th.getBoundingClientRect(); datePopup.style.left = rect.left + 'px'; datePopup.style.top = (rect.top - datePopup.offsetHeight - 10) + 'px'; datePopup.style.display = 'block'; setTimeout(() => datePopup.style.display = 'none', 3000); } }
+        });
+        document.querySelector('.table-container').addEventListener('scroll', () => datePopup.style.display = 'none');
+
+        // ========== CAMERAS ==========
+        toggleScanBtn.addEventListener('click', function () { vibrate(30); animateButton(this); if (cameraModal.classList.contains('active')) closeCam(); else { isAttendanceScan = true; openCam(); } });
+        fileBtn.addEventListener('click', function () { vibrate(30); animateButton(this); isAttendanceScan = true; qrHiddenInput.click(); });
+        async function openCam() { cameraModal.classList.add('active'); toggleScanBtn.classList.add('camera-running'); toggleScanBtn.innerHTML = iconStop; toggleScanBtn.title = "Stop Camera"; try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); cameraFeed.srcObject = videoStream; scanCam(); } catch(e) { showToast("Camera error"); closeCam(); } }
+        function closeCam() { if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; } cameraModal.classList.remove('active'); toggleScanBtn.classList.remove('camera-running'); toggleScanBtn.innerHTML = iconCamera; toggleScanBtn.title = "Open Camera"; }
+        let camInterval = null;
+        function scanCam() { if (camInterval) clearInterval(camInterval); const ctx = cameraCanvas.getContext('2d'); camInterval = setInterval(() => { if (!cameraModal.classList.contains('active') || !videoStream) { clearInterval(camInterval); return; } if (cameraFeed.readyState === cameraFeed.HAVE_ENOUGH_DATA) { cameraCanvas.height = cameraFeed.videoHeight; cameraCanvas.width = cameraFeed.videoWidth; ctx.drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height); const img = ctx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height); const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" }); if (code) handleQR(code.data); } }, 500); }
+        async function openRegCam() { regCameraModal.classList.add('active'); try { regVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); regCameraFeed.srcObject = regVideoStream; scanRegCam(); } catch(e) { showToast("Camera error"); closeRegCam(); } }
+        function closeRegCam() { if (regVideoStream) { regVideoStream.getTracks().forEach(t => t.stop()); regVideoStream = null; } regCameraModal.classList.remove('active'); }
+        regCamCloseBtn.addEventListener('click', closeRegCam);
+        let regCamInterval = null;
+        function scanRegCam() { if (regCamInterval) clearInterval(regCamInterval); const ctx = regCameraCanvas.getContext('2d'); regCamInterval = setInterval(() => { if (!regCameraModal.classList.contains('active') || !regVideoStream) { clearInterval(regCamInterval); return; } if (regCameraFeed.readyState === regCameraFeed.HAVE_ENOUGH_DATA) { regCameraCanvas.height = regCameraFeed.videoHeight; regCameraCanvas.width = regCameraFeed.videoWidth; ctx.drawImage(regCameraFeed, 0, 0, regCameraCanvas.width, regCameraCanvas.height); const img = ctx.getImageData(0, 0, regCameraCanvas.width, regCameraCanvas.height); const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" }); if (code) { clearInterval(regCamInterval); handleQR(code.data); } } }, 500); }
+
+        // ========== QR FILE SCAN ==========
+        qrHiddenInput.onchange = async e => {
+            const file = e.target.files[0]; if (!file) return;
+            showToast("Processing...", true); const url = URL.createObjectURL(file); processImage.src = url;
+            processImage.onload = async () => {
+                try { let text = null; if ('BarcodeDetector' in window) { try { const det = new BarcodeDetector({formats: ['qr_code']}); const bc = await det.detect(processImage); if (bc.length) text = bc[0].rawValue.trim(); } catch(ex) {} }
+                if (!text) { const cv = document.createElement('canvas'), cx = cv.getContext('2d'); cv.width = processImage.naturalWidth; cv.height = processImage.naturalHeight; cx.drawImage(processImage, 0, 0); const img = cx.getImageData(0, 0, cv.width, cv.height); const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" }); if (code && code.data) text = code.data.trim(); }
+                URL.revokeObjectURL(url); qrHiddenInput.value = ""; if (!text) { showToast("No QR found"); return; } handleQR(text);
+                } catch(err) { showToast("Error"); URL.revokeObjectURL(url); qrHiddenInput.value = ""; }
+            };
+        };
+
+        // ========== QR DATA HANDLER ==========
+        function parseQR(text) { const d = { church: '', christ: '', first: '', last: '', gender: '', phone: '' }; const parts = text.split(/[\n|]/).map(p => p.trim()).filter(p => p); for (const p of parts) { const l = p.toLowerCase(); if (l.includes('church')) d.church = p.split(/[:=]/)[1]?.trim() || p; else if (l.includes('christ') || l.includes('middle')) d.christ = p.split(/[:=]/)[1]?.trim() || p; else if (l.includes('first')) d.first = p.split(/[:=]/)[1]?.trim() || p; else if (l.includes('last') || l.includes('surname')) d.last = p.split(/[:=]/)[1]?.trim() || p; else if (l.includes('gender')) d.gender = p.split(/[:=]/)[1]?.trim() || p; else if (l.includes('phone') || l.includes('tel') || /^\+?\d{9,}$/.test(p)) d.phone = p.split(/[:=]/)[1]?.trim() || p; } if (!d.first && parts.length >= 4) { d.church = parts[0]||''; d.christ = parts[1]||''; d.first = parts[2]||''; d.last = parts[3]||''; d.gender = parts[4]||''; d.phone = parts[5]||''; } if (d.gender) { const g = d.gender.toLowerCase(); d.gender = (g.includes('male') || g === 'm') ? 'Male' : (g.includes('female') || g === 'f') ? 'Female' : ''; } return d; }
+
+        function handleQR(text) {
+            const d = parseQR(text); const first = d.first?.trim() || '', last = d.last?.trim() || '', fullName = `${first} ${last}`.trim();
+            if (!first || !last) { showToast("Invalid QR", true); return; }
+            const row = findStudentRow(fullName);
+            if (row) { if (isAttendanceScan) { if (isAttendanceOpen && currentAttendanceMark) { if (!markedThisMark.has(fullName.toLowerCase())) { markNextAvailableMark(row); markedThisMark.add(fullName.toLowerCase()); showToast(`Scanned: ${fullName}`, true); } else showToast(`Already M${currentAttendanceMark}`, true); } else { const nm = getCurrentMaxAttendanceMark() + 1; if (nm > 26) { showToast("All 26 filled", true); return; } currentAttendanceMark = nm; markedThisMark.clear(); startCountdown(); markNextAvailableMark(row); markedThisMark.add(fullName.toLowerCase()); showToast(`Scanned: ${fullName}`, true); } } else { showToast("Already registered!"); if (regCameraModal.classList.contains('active')) scanRegCam(); } }
+            else { if (isAttendanceScan) { showToast("New student? Use registration", true); return; } else { showToast("New Student"); if (regCameraModal.classList.contains('active')) closeRegCam(); formModal.classList.add('active'); studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = ""; document.getElementById('church-name').value = d.church || ''; document.getElementById('christ-name').value = d.christ || ''; document.getElementById('first-name').value = first; document.getElementById('last-name').value = last; document.getElementById('phone').value = d.phone || ''; if (d.gender === 'Male' || d.gender === 'Female') { const b = document.querySelector(`.gender-btn[data-value="${d.gender}"]`); if (b) { b.classList.add('selected'); genderInput.value = d.gender; } } } }
+        }
+
+        // ========== EXPORT ==========
+        const RECENT_T = 'recentDocTitles', RECENT_F = 'recentDocFiles';
+        function getRecent(k) { return JSON.parse(localStorage.getItem(k) || '[]'); }
+        function saveRecent(k, v) { let l = getRecent(k); l = l.filter(i => i !== v); l.unshift(v); if (l.length > 5) l.pop(); localStorage.setItem(k, JSON.stringify(l)); }
+        function setupAuto(input, dropId, storageKey) { const drop = document.getElementById(dropId); input.addEventListener('focus', () => { const items = getRecent(storageKey); drop.innerHTML = ''; if (!items.length) return; items.forEach(i => { const d = document.createElement('div'); d.className = 'autocomplete-item'; d.textContent = i; d.addEventListener('mousedown', e => { e.preventDefault(); input.value = i; drop.classList.remove('show'); }); drop.appendChild(d); }); drop.classList.add('show'); }); input.addEventListener('blur', () => drop.classList.remove('show')); }
+        setupAuto(docPageTitleInput, 'recent-page-titles', RECENT_T);
+        setupAuto(docFileTitleInput, 'recent-file-titles', RECENT_F);
+
+        document.getElementById('opt-docx').addEventListener('click', () => { vibrate(30); exportContextMenu.classList.remove('active'); currentExportType = 'docx'; currentHistoryExportId = null; document.getElementById('title-popup-header').textContent = "Export Document"; document.getElementById('main-export-inputs').style.display = 'block'; docPageTitleInput.value = ''; docFileTitleInput.value = ''; docPercentFilterInput.value = '0'; titlePopupModal.classList.add('active'); docPageTitleInput.focus(); });
+        titleCancelBtn.addEventListener('click', () => titlePopupModal.classList.remove('active'));
+        titleDownloadBtn.addEventListener('click', () => {
+            vibrate(30); const pf = parseInt(docPercentFilterInput.value) || 0;
+            if (currentHistoryExportId) {
+                if (fbReady) {
+                    const hRef = fbRef(`history/${currentHistoryExportId}`);
+                    fb.onValue(hRef, snap => { const item = snap.val(); if (item) { const headers = ['#','Full Name','G']; let mx = 0; item.data.forEach(s => { s.marks.forEach((m, i) => { if (m && i+1 > mx) mx = i+1; }); }); for (let i = 1; i <= mx; i++) headers.push(`M${i}`); headers.push('TM'); headers.push('%'); const data = []; item.data.forEach(s => { if (parseFloat(s.percent) >= pf) { const r = [String(data.length+1), s.name, s.gender]; for (let m = 0; m < mx; m++) r.push(s.marks[m]||''); r.push(s.total); r.push(String(s.percent).replace('%','')); data.push(r); } }); genDocx(item.title, item.title.replace(/[^a-z0-9]/gi,'_'), { headers, data, maxMark: mx }); } }, { onlyOnce: true });
+                } else { showToast("Offline - cannot export history", true); }
+                currentHistoryExportId = null;
+            } else { const pt = docPageTitleInput.value.trim(), ft = docFileTitleInput.value.trim(); if (!pt || !ft) { showToast("Enter text"); return; } saveRecent(RECENT_T, pt); saveRecent(RECENT_F, ft); genDocx(pt, ft, null, pf); }
+            titlePopupModal.classList.remove('active');
+        });
+        docFileTitleInput.addEventListener('keyup', e => { if (e.key === 'Enter') titleDownloadBtn.click(); });
+
+        function getTableData(filterPct) { const rows = tableBody.querySelectorAll('tr'); if (!rows.length) return null; const mx = Math.max(getCurrentMaxAttendanceMark(), 1); const headers = ['#','Full Name','G']; for (let i = 1; i <= mx; i++) headers.push(`M${i}`); headers.push('TM'); headers.push('%'); const data = []; let c = 1; rows.forEach(r => { if (parseFloat(r.cells[30].textContent) >= filterPct) { const rd = [String(c), r.cells[1].textContent.trim(), r.cells[2].textContent.trim()]; for (let m = 1; m <= mx; m++) rd.push(r.cells[2+m].textContent.trim()||''); rd.push(r.cells[29].textContent.trim()); rd.push(r.cells[30].textContent.trim()); data.push(rd); c++; } }); return { headers, data, maxMark: mx }; }
+
+        function genDocx(docTitle, fileTitle, pre, filterPct) {
+            try { 
+                const td = pre || getTableData(filterPct || 0); 
+                if (!td || !td.data.length) { showToast("No data"); return; }
+                const { headers, data, maxMark } = td; 
+                
+                // 2, 3, 4. Width Adjustments
+                const cw = headers.map(h => { 
+                    if (h === '#') return 500; // Fixed width for count (prevents wrap)
+                    if (h === 'Full Name') return 2400; // Decreased width
+                    if (h === 'TM') return 600; 
+                    if (h === '%') return 700; // Increased width (prevents wrap)
+                    return 500; 
+                });
+                
+                const orient = headers.length > 10 ? 'landscape' : 'portrait'; 
+                let pw, ph; 
+                if (orient === 'portrait') { pw = 11906; ph = 16838; } else { pw = 16838; ph = 11906; }
+                const esc = s => s.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+                let hc = headers.map((h,i) => { let bg='3C0028',co='E6B800'; if(h==='TM'||h==='%'){bg='E6B800';co='3C0028';} return `<w:tc><w:tcPr><w:tcW w:w="${cw[i]}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${bg}"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="${co}"/></w:rPr><w:t>${esc(h)}</w:t></w:r></w:p></w:tc>`; }).join('');
+                let dr = data.map(row => '<w:tr>' + row.map((c,i) => { const al = i===1?'left':'center'; return `<w:tc><w:tcPr><w:tcW w:w="${cw[i]}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="FFFFFF"/></w:tcPr><w:p><w:pPr><w:jc w:val="${al}"/></w:pPr><w:r><w:rPr><w:color w:val="000000"/></w:rPr><w:t>${esc(c)}</w:t></w:r></w:p></w:tc>`; }).join('') + '</w:tr>').join('');
+                const gc = cw.map(w => `<w:gridCol w:w="${w}"/>`).join('\n');
+                const xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="36"/></w:rPr><w:t>${esc(docTitle)}</w:t></w:r></w:p><w:p/><w:tbl><w:tblPr><w:jc w:val="center"/><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/></w:tblBorders></w:tblPr><w:tblGrid>${gc}</w:tblGrid><w:tr>${hc}</w:tr>${dr}</w:tbl><w:sectPr><w:pgSz w:w="${pw}" w:h="${ph}" w:orient="${orient}"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+                const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
+                const rl = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
+                const files = [{ name: '[Content_Types].xml', content: ct }, { name: '_rels/.rels', content: rl }, { name: 'word/document.xml', content: xml }];
+                const blob = createZip(files); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${fileTitle.replace(/[^a-z0-9]/gi,'_').toLowerCase()}_${new Date().toISOString().slice(0,10)}.docx`; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast("DOCX Downloaded!");
+            } catch(e) { console.error(e); showToast("DOCX Error"); }
+        }
+
+        function createZip(files) { 
+            const enc = new TextEncoder(), parts = [], cd = []; 
+            let off = 0; 
+            files.forEach(f => { 
+                const content = enc.encode(f.content); 
+                const name = enc.encode(f.name); 
+                const dt = new Date(); 
+                const time = ((dt.getHours()<<11)|(dt.getMinutes()<<5)|(dt.getSeconds()>>1)); 
+                const date = (((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate()); 
+                const lh = new Uint8Array(30); 
+                const lhv = new DataView(lh.buffer); 
+                lhv.setUint32(0,0x04034b50,true); 
+                lhv.setUint16(4,20,true); 
+                lhv.setUint16(6,0x0800,true); 
+                lhv.setUint16(8,0,true); 
+                lhv.setUint16(10,time,true);
+                lhv.setUint16(12,date,true);
+                lhv.setUint32(14,crc32(content),true);
+                lhv.setUint32(18,content.length,true);
+                lhv.setUint32(22,content.length,true);
+                lhv.setUint16(26,name.length,true);
+                parts.push(lh, name, content); 
+                const ch = new Uint8Array(46); 
+                const chv = new DataView(ch.buffer); 
+                chv.setUint32(0,0x02014b50,true); 
+                chv.setUint16(4,20,true); 
+                chv.setUint16(6,20,true); 
+                chv.setUint16(8,0x0800,true); 
+                chv.setUint16(10,0,true); 
+                chv.setUint16(12,time,true);
+                chv.setUint16(14,date,true);
+                chv.setUint32(16,crc32(content),true);
+                chv.setUint32(20,content.length,true);
+                chv.setUint32(24,content.length,true);
+                chv.setUint16(28,name.length,true);
+                chv.setUint16(30,0,true); 
+                chv.setUint16(32,0,true); 
+                chv.setUint16(34,0,true); 
+                chv.setUint16(36,0,true); 
+                chv.setUint32(38,0,true); 
+                chv.setUint32(42,off,true); 
+                cd.push(ch, name); 
+                off += 30 + name.length + content.length; 
+            }); 
+            const cdOff = off; 
+            let cdSz = 0; 
+            cd.forEach(p => { parts.push(p); cdSz += p.length; }); 
+            const eocd = new Uint8Array(22); 
+            const eocdv = new DataView(eocd.buffer); 
+            eocdv.setUint32(0,0x06054b50,true);
+            eocdv.setUint16(4,0,true); 
+            eocdv.setUint16(6,0,true); 
+            eocdv.setUint16(8,files.length,true);
+            eocdv.setUint16(10,files.length,true);
+            eocdv.setUint32(12,cdSz,true);
+            eocdv.setUint32(16,cdOff,true);
+            eocdv.setUint16(20,0,true); 
+            parts.push(eocd); 
+            return new Blob(parts, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }); 
+        }
+        
+        function crc32(data) { 
+            const table = new Uint32Array(256); 
+            for (let i=0;i<256;i++) { 
+                let c=i; 
+                for(let j=0;j<8;j++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); 
+                table[i]=c; 
+            } 
+            let crc=0xFFFFFFFF; 
+            for(let i=0;i<data.length;i++) crc=(crc>>>8)^table[(crc^data[i])&0xFF]; 
+            return (crc^0xFFFFFFFF)>>>0; 
+        }
+
+        // ========== PWA ==========
+        const manifestContent = { name: " ", short_name: " ", start_url: "./", display: "standalone", background_color: "#000", theme_color: "#3C0028", icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }] };
+        document.getElementById('app-manifest').href = URL.createObjectURL(new Blob([JSON.stringify(manifestContent)], { type: 'application/json' }));
+        if ('serviceWorker' in navigator) { const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js']; const sw = `const CN='AttendanceApp_v2',U=${JSON.stringify(urls)};self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match('./')))});`; navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{}); }
+
+        // ========== WINDOW LOAD ==========
+        window.addEventListener('load', async () => {
+            const rem = getRemaining(); const st = JSON.parse(localStorage.getItem('attendanceState') || 'null');
+            if (rem > 0 && st && st.isOpen) { isAttendanceOpen = false; currentAttendanceMark = st.currentMark; markedThisMark = new Set(st.markedSet || []); startCountdown(rem); showToast(`Resumed: ${rem}s`, true); }
+            else if (rem <= 0 && st && st.isOpen) { currentAttendanceMark = st.currentMark; markedThisMark = new Set(st.markedSet || []); markAbsentAfterTimeout(); clearCountdownEnd(); localStorage.setItem('attendanceState', JSON.stringify({ ...st, isOpen: false })); }
+        });
+
+        // ========== BACK BUTTON & ESC ==========
+        window.addEventListener('popstate', () => { [historyViewModal, historyModal, settingsPanel, listOverlay, formModal, titlePopupModal, archiveTitleModal, detailPopup, confirmModal].forEach(m => m.classList.remove('active')); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') { [listOverlay, formModal, regContextMenu, exportContextMenu, detailPopup, titlePopupModal, archiveTitleModal, settingsPanel, historyModal, historyViewModal].forEach(m => m.classList.remove('active')); closeCam(); closeRegCam(); historyDeleteModal.style.display = 'none'; if (confirmModal.classList.contains('active')) hideConfirm(); } });
+
+        // ========== EVENT LISTENERS FOR ONLINE/OFFLINE ==========
+        window.addEventListener('online', async () => {
+            updateBadges();
+            showToast("Back online! Syncing...", true);
+            
+            if (!fbReady) {
+                await loadFirebase();
+            }
+            
+            if (fbReady) {
+                await syncLocalToCloud();
+                loadFirebaseData(); 
+                loadHistoryFromFirebase();
+            }
+        });
+
+        window.addEventListener('offline', () => {
+            updateBadges();
+            showToast("Offline mode", true);
+        });
+
+        // ================================================================
+        // ===== APP INITIALIZATION =========================
+        // ================================================================
+        async function initApp() {
+            // 1. Load Local First (Instant Display)
+            loadFromLocalStorage();
+            loadHistoryFromLocalStorage();
+            
+            const loaded = await loadFirebase();
+
+            if (loaded) {
+                fb.onAuth(fb.auth, async user => {
+                    if (user) {
+                        localStorage.setItem('offline_auth', '1');
+                        appLockModal.style.display = 'none';
+                        logoutBtn.style.display = 'flex';
+                        
+                        if (navigator.onLine) {
+                            // SYNC FIRST, THEN LOAD
+                            await syncLocalToCloud();
+                            loadFirebaseData();
+                            loadHistoryFromFirebase();
+                        } else {
+                            updateBadges();
+                        }
+                        
+                    } else {
+                        appLockModal.style.display = 'flex';
+                        logoutBtn.style.display = 'none';
+                        lockInput.value = '';
+                        lockError.style.display = 'none';
+                        lockInput.focus();
+                    }
+                });
+
+                lockBtn.addEventListener('click', async () => {
+                    try { await fb.signIn(fb.auth, EMAIL, lockInput.value); }
+                    catch(e) { lockError.style.display = 'block'; lockInput.value = ''; }
+                });
+                lockInput.addEventListener('keyup', e => { if (e.key === 'Enter') lockBtn.click(); });
+                logoutBtn.addEventListener('click', async () => { await fb.signOut(fb.auth); });
+            } else {
+                console.log('[Init] Offline mode — using localStorage data');
+                updateBadges();
+                showToast('Offline Mode', true);
+
+                const wasAuth = localStorage.getItem('offline_auth');
+                if (wasAuth) {
+                    appLockModal.style.display = 'none';
+                    logoutBtn.style.display = 'flex';
+                } else {
+                    appLockModal.style.display = 'flex';
+                    lockInput.focus();
+                }
+
+                lockBtn.addEventListener('click', () => {
+                    if (lockInput.value === 'Debebe!') {
+                        localStorage.setItem('offline_auth', '1');
+                        appLockModal.style.display = 'none';
+                        logoutBtn.style.display = 'flex';
+                    } else {
+                        lockError.style.display = 'block';
+                        lockInput.value = '';
+                        lockInput.focus();
+                    }
+                });
+                lockInput.addEventListener('keyup', e => { if (e.key === 'Enter') lockBtn.click(); });
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('offline_auth');
+                    appLockModal.style.display = 'flex';
+                    logoutBtn.style.display = 'none';
+                    lockInput.value = '';
+                    lockError.style.display = 'none';
+                    lockInput.focus();
+                });
+            }
+        }
+
+        initApp();
+
+    </script>
+</body>
+</html>
