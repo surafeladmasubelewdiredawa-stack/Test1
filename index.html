@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Title tag set to space to remove browser text -->
-    <title> </title>
+    <title>Attendance System</title>
+    <!-- Logo Kept -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="manifest" id="app-manifest">
@@ -26,6 +26,7 @@
         .btn{border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;box-shadow:0 4px 8px rgba(0,0,0,.3);background:#E6B800;color:#3C0028;font-size:26px;font-weight:600;user-select:none}
         .top-right{position:absolute;top:20px;right:20px;display:flex;flex-direction:column;gap:15px;z-index:10}
         .top-left{position:absolute;top:20px;left:20px;z-index:10}
+        /* Centered buttons on front page */
         .center{position:absolute;top:80%;left:50%;transform:translateX(-50%);display:flex;gap:140px;align-items:center;justify-content:center;z-index:10}
         .top-right .btn{width:50px;height:50px;font-size:20px}
         .center .btn{width:100px;height:100px;font-size:44px}
@@ -235,7 +236,7 @@
         </div>
     </div>
 
-    <!-- Front Page Body: Text Removed, Kept buttons centered -->
+    <!-- Front Page Body: Text Removed, Only Buttons -->
     <div class="center">
         <button class="btn" id="toggle-scan-btn" title="Attendance Camera"><i class="fa-solid fa-camera"></i></button>
         <button class="btn" id="file-btn" title="Attendance File Scan"><i class="fa-solid fa-file-image"></i></button>
@@ -810,7 +811,7 @@
         // ========== TABLE DOUBLE-CLICK ==========
         tableBody.addEventListener('dblclick', function (e) {
             const td = e.target.closest('td');
-            if (td && td.cellIndex === 1) { const r = td.closest('tr'); selectedDetailRow = r; document.getElementById('detail-church').textContent = r.dataset.church || "--"; document.getElementById('detail-christ').textContent = r.dataset.church || "--"; document.getElementById('detail-fullname').textContent = r.dataset.fullname || "--"; document.getElementById('detail-gender').textContent = r.dataset.gender || "--"; document.getElementById('detail-phone').textContent = r.dataset.phone || "--"; document.getElementById('detail-date').textContent = r.dataset.date || "--"; document.getElementById('detail-time').textContent = r.dataset.time || "--"; detailPopup.classList.add('active'); return; }
+            if (td && td.cellIndex === 1) { const r = td.closest('tr'); selectedDetailRow = r; document.getElementById('detail-church').textContent = r.dataset.church || "--"; document.getElementById('detail-christ').textContent = r.dataset.christ || "--"; document.getElementById('detail-fullname').textContent = r.dataset.fullname || "--"; document.getElementById('detail-gender').textContent = r.dataset.gender || "--"; document.getElementById('detail-phone').textContent = r.dataset.phone || "--"; document.getElementById('detail-date').textContent = r.dataset.date || "--"; document.getElementById('detail-time').textContent = r.dataset.time || "--"; detailPopup.classList.add('active'); return; }
             if (td && td.cellIndex >= 3 && td.cellIndex <= 28) { const v = td.dataset.value, r = td.closest('tr'), cm = td.cellIndex - 2, ss = parseInt(r.dataset.startMark || 1); if (cm < ss) { showToast(`Cannot change Mark ${cm}`); return; } if (v === '0') { const gm = getCurrentMaxAttendanceMark(), am = currentAttendanceMark || gm; if (cm === am || isAttendanceOpen) { setMarkDisplay(td, 2); td.querySelector('span').style.color = '#fff'; td.title = `Permission Mark ${cm}`; updateTotals(r); saveData(); showToast("Changed to Permission"); } else showToast("Can only change latest mark"); } }
         });
         document.querySelector('thead').addEventListener('dblclick', function (e) {
@@ -984,8 +985,7 @@
         }
 
         // ========== PWA ==========
-        // Name set to single space to remove text label
-        const manifestContent = { name: " ", short_name: " ", start_url: "./", display: "standalone", background_color: "#000", theme_color: "#3C0028", icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }] };
+        const manifestContent = { name: "Attendance System", short_name: "Attendance", start_url: "./", display: "standalone", background_color: "#000", theme_color: "#3C0028", icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }] };
         document.getElementById('app-manifest').href = URL.createObjectURL(new Blob([JSON.stringify(manifestContent)], { type: 'application/json' }));
         if ('serviceWorker' in navigator) { const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js']; const sw = `const CN='AttendanceApp_v2',U=${JSON.stringify(urls)};self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match('./')))});`; navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{}); }
 
