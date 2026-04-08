@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Title KEPT as requested ("not the title") -->
-    <title>Attendance System</title>
-    <!-- Logo and Icons kept -->
+    <!-- Title tag set to space to remove browser text -->
+    <title> </title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="manifest" id="app-manifest">
@@ -811,7 +810,7 @@
         // ========== TABLE DOUBLE-CLICK ==========
         tableBody.addEventListener('dblclick', function (e) {
             const td = e.target.closest('td');
-            if (td && td.cellIndex === 1) { const r = td.closest('tr'); selectedDetailRow = r; document.getElementById('detail-church').textContent = r.dataset.church || "--"; document.getElementById('detail-christ').textContent = r.dataset.christ || "--"; document.getElementById('detail-fullname').textContent = r.dataset.fullname || "--"; document.getElementById('detail-gender').textContent = r.dataset.gender || "--"; document.getElementById('detail-phone').textContent = r.dataset.phone || "--"; document.getElementById('detail-date').textContent = r.dataset.date || "--"; document.getElementById('detail-time').textContent = r.dataset.time || "--"; detailPopup.classList.add('active'); return; }
+            if (td && td.cellIndex === 1) { const r = td.closest('tr'); selectedDetailRow = r; document.getElementById('detail-church').textContent = r.dataset.church || "--"; document.getElementById('detail-christ').textContent = r.dataset.church || "--"; document.getElementById('detail-fullname').textContent = r.dataset.fullname || "--"; document.getElementById('detail-gender').textContent = r.dataset.gender || "--"; document.getElementById('detail-phone').textContent = r.dataset.phone || "--"; document.getElementById('detail-date').textContent = r.dataset.date || "--"; document.getElementById('detail-time').textContent = r.dataset.time || "--"; detailPopup.classList.add('active'); return; }
             if (td && td.cellIndex >= 3 && td.cellIndex <= 28) { const v = td.dataset.value, r = td.closest('tr'), cm = td.cellIndex - 2, ss = parseInt(r.dataset.startMark || 1); if (cm < ss) { showToast(`Cannot change Mark ${cm}`); return; } if (v === '0') { const gm = getCurrentMaxAttendanceMark(), am = currentAttendanceMark || gm; if (cm === am || isAttendanceOpen) { setMarkDisplay(td, 2); td.querySelector('span').style.color = '#fff'; td.title = `Permission Mark ${cm}`; updateTotals(r); saveData(); showToast("Changed to Permission"); } else showToast("Can only change latest mark"); } }
         });
         document.querySelector('thead').addEventListener('dblclick', function (e) {
@@ -887,7 +886,7 @@
                 if (!td || !td.data.length) { showToast("No data"); return; }
                 const { headers, data, maxMark } = td; 
                 
-                // Widths logic maintained
+                // Widths logic maintained from previous fix
                 const cw = headers.map(h => { 
                     if (h === '#') return 500; 
                     if (h === 'Full Name') return 2400; 
@@ -919,7 +918,7 @@
                 const name = enc.encode(f.name); 
                 const dt = new Date(); 
                 const time = ((dt.getHours()<<11)|(dt.getMinutes()<<5)|(dt.getSeconds()>>1)); 
-                const date = (((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate(); 
+                const date = (((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate()); 
                 const lh = new Uint8Array(30); 
                 const lhv = new DataView(lh.buffer); 
                 lhv.setUint32(0,0x04034b50,true); 
@@ -985,7 +984,7 @@
         }
 
         // ========== PWA ==========
-        // Manifest name set to " " to remove label from home screen/splash, but title in <head> remains "Attendance System"
+        // Name set to single space to remove text label
         const manifestContent = { name: " ", short_name: " ", start_url: "./", display: "standalone", background_color: "#000", theme_color: "#3C0028", icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }] };
         document.getElementById('app-manifest').href = URL.createObjectURL(new Blob([JSON.stringify(manifestContent)], { type: 'application/json' }));
         if ('serviceWorker' in navigator) { const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js']; const sw = `const CN='AttendanceApp_v2',U=${JSON.stringify(urls)};self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match('./')))});`; navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{}); }
