@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Attendance System</title>
+    <!-- Logo and Icons kept as requested -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="manifest" id="app-manifest">
@@ -25,7 +26,7 @@
         .btn{border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;box-shadow:0 4px 8px rgba(0,0,0,.3);background:#E6B800;color:#3C0028;font-size:26px;font-weight:600;user-select:none}
         .top-right{position:absolute;top:20px;right:20px;display:flex;flex-direction:column;gap:15px;z-index:10}
         .top-left{position:absolute;top:20px;left:20px;z-index:10}
-        .center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;gap:140px;align-items:center;justify-content:center;z-index:10}
+        .center{position:absolute;top:80%;left:50%;transform:translateX(-50%);display:flex;gap:140px;align-items:center;justify-content:center;z-index:10}
         .top-right .btn{width:50px;height:50px;font-size:20px}
         .center .btn{width:100px;height:100px;font-size:44px}
         .btn:hover{transform:translateY(-3px);box-shadow:0 6px 12px rgba(0,0,0,.5);background:#d4a800}
@@ -33,24 +34,6 @@
         #toggle-scan-btn.camera-running{background:#b71c1c;color:#fff;box-shadow:0 0 15px rgba(183,28,28,.6)}
         #toggle-scan-btn.camera-running:hover{background:#d32f2f}
         .btn:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(100%);pointer-events:none}
-
-        /* ===== APP LABEL AT BOTTOM — GREEN ===== */
-        .app-label{
-            position:fixed;
-            bottom:28px;
-            left:50%;
-            transform:translateX(-50%);
-            color:#00ff9d;
-            font-size:1.05rem;
-            font-weight:700;
-            letter-spacing:1.5px;
-            text-transform:uppercase;
-            z-index:9;
-            pointer-events:none;
-            text-shadow:0 0 12px rgba(0,255,157,.35);
-            white-space:nowrap;
-        }
-
         .countdown{color:#3C0028;font-size:48px;font-weight:bold;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .4s;pointer-events:none;z-index:12;cursor:pointer}
         .countdown.active{opacity:1;pointer-events:auto}
         .countdown.warning{color:#ff4d4d;animation:pulse 1s infinite}
@@ -203,7 +186,6 @@
             .form-container{padding:25px}
             th,td{padding:8px 6px;font-size:.92rem}
             .history-modal-content{width:100%;height:100%;border-radius:0}
-            .app-label{font-size:.9rem;bottom:22px}
         }
     </style>
 </head>
@@ -253,13 +235,11 @@
         </div>
     </div>
 
+    <!-- Front Page Body: Text Removed, Kept buttons centered -->
     <div class="center">
         <button class="btn" id="toggle-scan-btn" title="Attendance Camera"><i class="fa-solid fa-camera"></i></button>
         <button class="btn" id="file-btn" title="Attendance File Scan"><i class="fa-solid fa-file-image"></i></button>
     </div>
-
-    <!-- Green "Attendance System" label at bottom -->
-    <div class="app-label">Attendance System</div>
 
     <div id="list-overlay" class="list-overlay">
         <div class="overlay-top-right">
@@ -411,6 +391,7 @@
     <div id="toast" class="toast">Action Successful</div>
 
     <script type="module">
+        // ========== FIREBASE — DYNAMIC LOADING ==========
         const firebaseConfig = {
             apiKey: "AIzaSyCDhtyvb1nQSd2wdXWG3vvC9WL01QwlQk8",
             authDomain: "attendance-system-14d2b.firebaseapp.com",
@@ -451,15 +432,18 @@
 
         function fbRef(path) { return fbReady ? fb.ref(fb.db, path) : null; }
 
+        // ========== STATUS BADGES ==========
         const offlineBadge = document.getElementById('offline-badge');
         const syncBadge = document.getElementById('sync-badge');
         function updateBadges() { if (navigator.onLine) offlineBadge.classList.remove('active'); else { offlineBadge.classList.add('active'); syncBadge.classList.remove('active'); } }
         updateBadges();
 
+        // ========== UTILITIES ==========
         const animateButton = b => { b.style.transform = 'scale(0.92)'; setTimeout(() => b.style.transform = '', 140); };
         const vibrate = d => { if ('vibrate' in navigator) navigator.vibrate(d || 30); };
         const showToast = (msg, center) => { const t = document.getElementById('toast'); t.textContent = msg; t.classList.remove('bottom-toast', 'center-toast'); t.classList.add(center ? 'center-toast' : 'bottom-toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500); };
 
+        // ========== ELEMENTS ==========
         const toggleScanBtn = document.getElementById('toggle-scan-btn');
         const fileBtn = document.getElementById('file-btn');
         const iconCamera = '<i class="fa-solid fa-camera"></i>';
@@ -494,6 +478,7 @@
         let afterConfirmAction = null, currentExportType = 'docx', currentHistoryExportId = null, pendingDeleteHistoryId = null;
         let unsubscribeRecords = null, unsubscribeHistory = null;
 
+        // ========== AUTH ==========
         const appLockModal = document.getElementById('app-lock-modal');
         const lockInput = document.getElementById('lock-input');
         const lockBtn = document.getElementById('lock-btn');
@@ -501,6 +486,7 @@
         const logoutBtn = document.getElementById('logout-btn');
         const EMAIL = 'attendance@system.com';
 
+        // ========== TABLE HELPERS ==========
         function buildStudentObj(row) { const marks = []; for (let i = 3; i <= 28; i++) marks.push({ html: row.cells[i].innerHTML, value: row.cells[i].dataset.value || '', title: row.cells[i].title || '', date: row.cells[i].dataset.date || '' }); return { name: row.cells[1].textContent, gender: row.cells[2].textContent, church: row.dataset.church || '', christ: row.dataset.christ || '', fullname: row.dataset.fullname || '', phone: row.dataset.phone || '', date: row.dataset.date || '', time: row.dataset.time || '', startMark: row.dataset.startMark || 1, marks, total: row.cells[29].textContent, percent: row.cells[30].textContent }; }
         function populateTable(data) { tableBody.innerHTML = ''; let c = 1; Object.keys(data).forEach(key => { const s = data[key]; if (s === null) return; const row = document.createElement('tr'); let mh = ''; (s.marks || []).forEach(m => { mh += `<td data-value="${m.value||''}" title="${m.title||''}" data-date="${m.date||''}">${m.html||''}</td>`; }); for (let i = (s.marks||[]).length; i < 26; i++) mh += '<td></td>'; row.innerHTML = `<td>${c}</td><td>${s.name}</td><td>${s.gender}</td>${mh}<td>${s.total}</td><td>${s.percent}</td>`; row.dataset.id = key; row.dataset.church = s.church||''; row.dataset.christ = s.christ||''; row.dataset.fullname = s.fullname||''; row.dataset.gender = s.gender||''; row.dataset.phone = s.phone||''; row.dataset.date = s.date||''; row.dataset.time = s.time||''; row.dataset.startMark = s.startMark||1; tableBody.appendChild(row); c++; }); updateAllTotals(); }
         function updateAllTotals() { document.querySelectorAll('#student-table-body tr').forEach(r => updateTotals(r)); }
@@ -514,6 +500,7 @@
         function markNextAvailableMark(row) { if (!row) return; let tm; if (isAttendanceOpen && currentAttendanceMark) tm = currentAttendanceMark; else tm = getCurrentMaxAttendanceMark() + 1; if (tm > 26) { showToast("All 26 marks filled", true); return; } const cell = row.cells[2+tm]; if (!cell) return; if (!cell.dataset.value) { const tl = parseInt(countdownNumber.textContent); const sc = tl > 15 ? 4 : tl > 10 ? 3 : tl > 5 ? 2 : 1; setMarkDisplay(cell, sc); cell.title = `Mark ${tm}: Score ${sc}`; cell.classList.add('mark-cell'); cell.classList.remove('disabled'); showToast(`Mark ${tm}: Score ${sc}`, true); vibrate(300); updateTotals(row); saveData(); } else showToast(`Already marked M${tm}`, true); }
         function genKey() { if (fbReady) return fb.push(fb.recordsRef).key; const c = new Uint8Array(20); crypto.getRandomValues(c); let r = ''; const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; for (let i = 0; i < 20; i++) r += chars[c[i] % chars.length]; return r; }
 
+        // ========== COUNTDOWN ==========
         function saveCountdownEnd(end) { localStorage.setItem('countdownEndTime', end); }
         function clearCountdownEnd() { localStorage.removeItem('countdownEndTime'); }
         function getRemaining() { const e = localStorage.getItem('countdownEndTime'); if (!e) return 0; const d = Math.floor((parseInt(e) - Date.now()) / 1000); return d > 0 ? d : 0; }
@@ -523,11 +510,18 @@
         function markAbsentAfterTimeout() { if (!currentAttendanceMark) return; const mn = currentAttendanceMark; let any = false; document.querySelectorAll('#student-table-body tr').forEach(r => { if (parseInt(r.dataset.startMark || 1) <= mn) { const c = r.cells[2+mn]; if (c && c.innerHTML.trim() === '') { setMarkDisplay(c, 0); c.title = `Absent on Mark ${mn}`; c.classList.add('mark-cell'); c.classList.remove('disabled'); updateTotals(r); any = true; } } }); if (any) showToast("Missing marked 0", true); saveData(); }
         function saveAttState() { if (isAttendanceOpen && currentAttendanceMark) localStorage.setItem('attendanceState', JSON.stringify({ isOpen: true, currentMark: currentAttendanceMark, markedSet: Array.from(markedThisMark) })); }
 
+        // ========== LOAD DATA ==========
         function loadFromLocalStorage() {
             try {
                 const saved = JSON.parse(localStorage.getItem('attendance_students') || '{}');
-                if (Object.keys(saved).length > 0) { populateTable(saved); } else { tableBody.innerHTML = ''; }
-            } catch(e) { tableBody.innerHTML = ''; }
+                if (Object.keys(saved).length > 0) {
+                    populateTable(saved);
+                } else {
+                    tableBody.innerHTML = '';
+                }
+            } catch(e) {
+                tableBody.innerHTML = '';
+            }
         }
 
         function loadFirebaseData() {
@@ -539,66 +533,121 @@
                     const data = snap.val();
                     const clean = {};
                     let hasData = false;
-                    for (const [k, v] of Object.entries(data)) { if (v !== null) { clean[k] = v; hasData = true; } }
-                    if (hasData) { populateTable(clean); localStorage.setItem('attendance_students', JSON.stringify(clean)); localStorage.setItem('attendance_deleted', '[]'); }
+                    for (const [k, v] of Object.entries(data)) {
+                        if (v !== null) { clean[k] = v; hasData = true; }
+                    }
+                    if (hasData) {
+                        populateTable(clean);
+                        localStorage.setItem('attendance_students', JSON.stringify(clean));
+                        localStorage.setItem('attendance_deleted', '[]');
+                    }
                 }
             }, (err) => { console.error("Firebase read error:", err); });
         }
 
+        // ========== SAVE DATA ==========
         function saveData() {
             const rows = document.querySelectorAll('#student-table-body tr');
             const data = {};
-            rows.forEach(r => { const k = r.dataset.id; if (k) data[k] = buildStudentObj(r); });
+            rows.forEach(r => {
+                const k = r.dataset.id;
+                if (k) data[k] = buildStudentObj(r);
+            });
+
             localStorage.setItem('attendance_students', JSON.stringify(data));
             saveAttState();
+
             if (navigator.onLine && fbReady) {
                 fb.update(fb.recordsRef, data).catch(err => console.error("Firebase save error:", err));
+
                 const deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
                 if (deletedKeys.length > 0) {
-                    const upd = {}; deletedKeys.forEach(k => { upd[k] = null; });
-                    fb.update(fb.recordsRef, upd).then(() => { localStorage.setItem('attendance_deleted', '[]'); }).catch(err => { console.error("Firebase deletion sync error:", err); });
+                    const upd = {};
+                    deletedKeys.forEach(k => { upd[k] = null; });
+                    fb.update(fb.recordsRef, upd).then(() => {
+                        localStorage.setItem('attendance_deleted', '[]');
+                    }).catch(err => {
+                        console.error("Firebase deletion sync error:", err);
+                    });
                 }
             }
         }
 
+        // ========== SYNC LOGIC ==========
         async function syncLocalToCloud() {
             if (!fbReady || !navigator.onLine) return;
+
             syncBadge.classList.add('active');
             console.log("[Sync] Starting upload...");
+
             try {
                 const localData = JSON.parse(localStorage.getItem('attendance_students') || '{}');
-                if (Object.keys(localData).length > 0) { await fb.update(fb.recordsRef, localData); console.log("[Sync] Students uploaded."); }
+                if (Object.keys(localData).length > 0) {
+                    await fb.update(fb.recordsRef, localData);
+                    console.log("[Sync] Students uploaded.");
+                }
+
                 const deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
-                if (deletedKeys.length > 0) { const upd = {}; deletedKeys.forEach(k => { upd[k] = null; }); await fb.update(fb.recordsRef, upd); localStorage.setItem('attendance_deleted', '[]'); console.log("[Sync] Deletions synced."); }
+                if (deletedKeys.length > 0) {
+                    const upd = {};
+                    deletedKeys.forEach(k => { upd[k] = null; });
+                    await fb.update(fb.recordsRef, upd);
+                    localStorage.setItem('attendance_deleted', '[]');
+                    console.log("[Sync] Deletions synced.");
+                }
+
                 syncHistoryToFirebase();
-            } catch(e) { console.error("[Sync] Upload failed:", e); }
+
+            } catch(e) {
+                console.error("[Sync] Upload failed:", e);
+            }
+            
             syncBadge.classList.remove('active');
         }
 
         function syncHistoryToFirebase() {
             if (!fbReady || !navigator.onLine) return;
             const pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
-            pending.forEach(entry => { fb.push(fb.historyRef, entry); });
-            if (pending.length > 0) { localStorage.setItem('attendance_pending_history', '[]'); console.log("[Sync] History uploaded."); }
+            pending.forEach(entry => {
+                fb.push(fb.historyRef, entry);
+            });
+            if (pending.length > 0) {
+                localStorage.setItem('attendance_pending_history', '[]');
+                console.log("[Sync] History uploaded.");
+            }
         }
 
+        // ========== HISTORY ==========
         function loadHistoryFromLocalStorage() {
             try {
                 const arr = JSON.parse(localStorage.getItem('attendance_history') || '[]');
-                if (arr.length > 0) { const data = {}; arr.forEach(h => { data[h.firebaseKey] = h; }); renderHistory(data); } else { renderHistory({}); }
-            } catch(e) { renderHistory({}); }
+                if (arr.length > 0) {
+                    const data = {};
+                    arr.forEach(h => { data[h.firebaseKey] = h; });
+                    renderHistory(data);
+                } else {
+                    renderHistory({});
+                }
+            } catch(e) {
+                renderHistory({});
+            }
         }
 
         function loadHistoryFromFirebase() {
             loadHistoryFromLocalStorage();
+
             if (!fbReady || !navigator.onLine) return;
+
             if (unsubscribeHistory) { try { unsubscribeHistory(); } catch(e) {} }
+
             unsubscribeHistory = fb.onValue(fb.historyRef, (snap) => {
                 if (snap.exists()) {
                     const data = snap.val();
                     renderHistory(data);
                     const arr = [];
-                    for (const [k, v] of Object.entries(data)) { if (v !== null) arr.push({ firebaseKey: k, ...v }); }
+                    for (const [k, v] of Object.entries(data)) {
+                        if (v !== null) arr.push({ firebaseKey: k, ...v });
+                    }
                     localStorage.setItem('attendance_history', JSON.stringify(arr));
                     syncHistoryToFirebase();
                 }
@@ -632,8 +681,14 @@
             if (historyDeleteInput.value === 'Debebe!') {
                 historyDeleteModal.style.display = 'none';
                 if (pendingDeleteHistoryId) {
-                    if (navigator.onLine && fbReady) { try { await fb.remove(fbRef(`history/${pendingDeleteHistoryId}`)); showToast("History deleted"); } catch(e) { showToast("Error deleting"); } }
-                    else { let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]'); hist = hist.filter(h => h.firebaseKey !== pendingDeleteHistoryId); localStorage.setItem('attendance_history', JSON.stringify(hist)); showToast("History deleted offline"); }
+                    if (navigator.onLine && fbReady) {
+                        try { await fb.remove(fbRef(`history/${pendingDeleteHistoryId}`)); showToast("History deleted"); } catch(e) { showToast("Error deleting"); }
+                    } else {
+                        let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
+                        hist = hist.filter(h => h.firebaseKey !== pendingDeleteHistoryId);
+                        localStorage.setItem('attendance_history', JSON.stringify(hist));
+                        showToast("History deleted offline");
+                    }
                     pendingDeleteHistoryId = null;
                 }
             } else { historyDeleteError.style.display = 'block'; historyDeleteInput.value = ''; historyDeleteInput.focus(); }
@@ -641,6 +696,7 @@
         historyDeleteInput.addEventListener('keyup', e => { if (e.key === 'Enter') historyDeleteBtn.click(); });
         historyDeleteModal.addEventListener('click', e => { if (e.target === historyDeleteModal) historyDeleteModal.style.display = 'none'; });
 
+        // ========== MOVE TO HISTORY ==========
         moveHistoryBtn.addEventListener('click', () => {
             vibrate(30); if (!tableBody.querySelectorAll('tr').length) { showToast("No students"); return; }
             if (!checkIfAnyMarksExist()) { showToast("No attendance data"); return; }
@@ -655,16 +711,30 @@
             showToast("Archiving...");
             const arr = []; tableBody.querySelectorAll('tr').forEach(r => { const s = { name: r.cells[1].textContent, gender: r.cells[2].textContent, marks: [], total: r.cells[29].textContent, percent: r.cells[30].textContent, church: r.dataset.church, christ: r.dataset.christ, phone: r.dataset.phone }; for (let i = 1; i <= 26; i++) s.marks.push(r.cells[2+i].textContent.trim()); arr.push(s); });
             const entry = { id: Date.now(), title, date: new Date().toISOString(), count: arr.length, data: arr };
+
             let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
             hist.push({ firebaseKey: 'local_' + entry.id, ...entry });
             localStorage.setItem('attendance_history', JSON.stringify(hist));
+
             if (navigator.onLine && fbReady) {
-                try { await fb.push(fb.historyRef, entry); showToast("Moved to History!"); } catch(e) { let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]'); pending.push(entry); localStorage.setItem('attendance_pending_history', JSON.stringify(pending)); showToast("Queued for sync", true); }
-            } else { let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]'); pending.push(entry); localStorage.setItem('attendance_pending_history', JSON.stringify(pending)); showToast("Queued for sync", true); }
+                try { await fb.push(fb.historyRef, entry); showToast("Moved to History!"); } catch(e) {
+                    let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
+                    pending.push(entry);
+                    localStorage.setItem('attendance_pending_history', JSON.stringify(pending));
+                    showToast("Queued for sync", true);
+                }
+            } else {
+                let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
+                pending.push(entry);
+                localStorage.setItem('attendance_pending_history', JSON.stringify(pending));
+                showToast("Queued for sync", true);
+            }
+
             tableBody.querySelectorAll('tr').forEach(r => { for (let i = 3; i <= 28; i++) { r.cells[i].innerHTML = ''; r.cells[i].classList.remove('mark-cell', 'disabled'); r.cells[i].dataset.value = ''; r.cells[i].title = ''; r.cells[i].dataset.date = ''; } r.cells[29].textContent = '0'; r.cells[30].textContent = '0'; r.dataset.startMark = "1"; });
             currentAttendanceMark = null; markedThisMark.clear(); isAttendanceOpen = false; stopCountdown(); saveData();
         }
 
+        // ========== CONFIRM / DELETE ==========
         function showConfirm(row, name) { pendingDeleteRow = row; document.getElementById('confirm-title-text').innerHTML = "Delete this student?<br>"; confirmStudentName.textContent = name; confirmModal.classList.add('active'); }
         function hideConfirm() { confirmModal.classList.remove('active'); pendingDeleteRow = null; afterConfirmAction = null; }
         confirmYesBtn.onclick = () => { if (afterConfirmAction) afterConfirmAction(); hideConfirm(); saveData(); };
@@ -675,19 +745,33 @@
             detailPopup.classList.remove('active'); showConfirm(selectedDetailRow, name);
             afterConfirmAction = () => {
                 const deletedKey = selectedDetailRow.dataset.id;
-                selectedDetailRow.remove(); sortTableAndNumbers();
+                selectedDetailRow.remove();
+                sortTableAndNumbers();
+
                 let deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
-                if (deletedKey && !deletedKeys.includes(deletedKey)) deletedKeys.push(deletedKey);
+                if (deletedKey && !deletedKeys.includes(deletedKey)) {
+                    deletedKeys.push(deletedKey);
+                }
                 localStorage.setItem('attendance_deleted', JSON.stringify(deletedKeys));
                 saveData();
-                if (navigator.onLine && fbReady && deletedKey) { fb.update(fb.recordsRef, { [deletedKey]: null }).then(() => { deletedKeys = deletedKeys.filter(k => k !== deletedKey); localStorage.setItem('attendance_deleted', JSON.stringify(deletedKeys)); }); }
-                showToast("Student deleted"); selectedDetailRow = null;
+
+                if (navigator.onLine && fbReady && deletedKey) {
+                    fb.update(fb.recordsRef, { [deletedKey]: null }).then(() => {
+                        deletedKeys = deletedKeys.filter(k => k !== deletedKey);
+                        localStorage.setItem('attendance_deleted', JSON.stringify(deletedKeys));
+                    });
+                }
+
+                showToast("Student deleted");
+                selectedDetailRow = null;
             };
         });
         detailPopup.querySelector('.popup-close').addEventListener('click', () => detailPopup.classList.remove('active'));
 
+        // ========== GENDER BUTTONS ==========
         genderBtns.forEach(b => b.addEventListener('click', function () { genderBtns.forEach(x => x.classList.remove('selected')); this.classList.add('selected'); genderInput.value = this.dataset.value; }));
 
+        // ========== REGISTRATION FORM ==========
         studentForm.addEventListener('submit', e => {
             e.preventDefault(); vibrate(300);
             const church = document.getElementById('church-name').value.trim(), christ = document.getElementById('christ-name').value.trim();
@@ -707,6 +791,7 @@
             studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = "";
         });
 
+        // ========== UI BUTTONS ==========
         document.getElementById('list-btn').addEventListener('click', function () { vibrate(30); listOverlay.classList.add('active'); history.pushState({ page: 'list' }, ''); animateButton(this); regContextMenu.classList.remove('active'); exportContextMenu.classList.remove('active'); });
         settingBtn.addEventListener('click', function (e) { e.stopPropagation(); vibrate(30); settingsPanel.classList.toggle('active'); });
         settingsCloseBtn.addEventListener('click', () => settingsPanel.classList.remove('active'));
@@ -716,12 +801,9 @@
         document.getElementById('close-list').addEventListener('click', () => { vibrate(30); listOverlay.classList.remove('active'); });
         exportMenuBtn.addEventListener('click', function (e) { e.stopPropagation(); e.preventDefault(); vibrate(30); animateButton(this); exportContextMenu.style.top = '80px'; exportContextMenu.style.right = '75px'; exportContextMenu.style.left = 'auto'; exportContextMenu.classList.toggle('active'); regContextMenu.classList.remove('active'); });
         regMenuBtn.addEventListener('click', function (e) { e.stopPropagation(); e.preventDefault(); vibrate(30); animateButton(this); regContextMenu.style.top = '80px'; regContextMenu.style.right = '20px'; regContextMenu.style.left = 'auto'; regContextMenu.classList.toggle('active'); exportContextMenu.classList.remove('active'); });
-        document.getElementById('cancel-register').addEventListener('click', () => formModal.classList.remove('active'));
-        document.getElementById('opt-manual').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); formModal.classList.add('active'); studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = ""; });
-        document.getElementById('opt-qr-file').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); isAttendanceScan = false; qrHiddenInput.click(); });
-        document.getElementById('opt-qr-camera').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); isAttendanceScan = false; openRegCam(); });
         document.addEventListener('click', e => { if (exportContextMenu.classList.contains('active') && !exportContextMenu.contains(e.target) && e.target !== exportMenuBtn && !exportMenuBtn.contains(e.target)) exportContextMenu.classList.remove('active'); if (regContextMenu.classList.contains('active') && !regContextMenu.contains(e.target) && e.target !== regMenuBtn && !regMenuBtn.contains(e.target)) regContextMenu.classList.remove('active'); if (settingsPanel.classList.contains('active') && !settingsPanel.contains(e.target) && e.target !== settingBtn && !settingBtn.contains(e.target)) settingsPanel.classList.remove('active'); });
 
+        // ========== TABLE DOUBLE-CLICK ==========
         tableBody.addEventListener('dblclick', function (e) {
             const td = e.target.closest('td');
             if (td && td.cellIndex === 1) { const r = td.closest('tr'); selectedDetailRow = r; document.getElementById('detail-church').textContent = r.dataset.church || "--"; document.getElementById('detail-christ').textContent = r.dataset.christ || "--"; document.getElementById('detail-fullname').textContent = r.dataset.fullname || "--"; document.getElementById('detail-gender').textContent = r.dataset.gender || "--"; document.getElementById('detail-phone').textContent = r.dataset.phone || "--"; document.getElementById('detail-date').textContent = r.dataset.date || "--"; document.getElementById('detail-time').textContent = r.dataset.time || "--"; detailPopup.classList.add('active'); return; }
@@ -733,6 +815,7 @@
         });
         document.querySelector('.table-container').addEventListener('scroll', () => datePopup.style.display = 'none');
 
+        // ========== CAMERAS ==========
         toggleScanBtn.addEventListener('click', function () { vibrate(30); animateButton(this); if (cameraModal.classList.contains('active')) closeCam(); else { isAttendanceScan = true; openCam(); } });
         fileBtn.addEventListener('click', function () { vibrate(30); animateButton(this); isAttendanceScan = true; qrHiddenInput.click(); });
         async function openCam() { cameraModal.classList.add('active'); toggleScanBtn.classList.add('camera-running'); toggleScanBtn.innerHTML = iconStop; toggleScanBtn.title = "Stop Camera"; try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); cameraFeed.srcObject = videoStream; scanCam(); } catch(e) { showToast("Camera error"); closeCam(); } }
@@ -745,6 +828,7 @@
         let regCamInterval = null;
         function scanRegCam() { if (regCamInterval) clearInterval(regCamInterval); const ctx = regCameraCanvas.getContext('2d'); regCamInterval = setInterval(() => { if (!regCameraModal.classList.contains('active') || !regVideoStream) { clearInterval(regCamInterval); return; } if (regCameraFeed.readyState === regCameraFeed.HAVE_ENOUGH_DATA) { regCameraCanvas.height = regCameraFeed.videoHeight; regCameraCanvas.width = regCameraFeed.videoWidth; ctx.drawImage(regCameraFeed, 0, 0, regCameraCanvas.width, regCameraCanvas.height); const img = ctx.getImageData(0, 0, regCameraCanvas.width, regCameraCanvas.height); const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" }); if (code) { clearInterval(regCamInterval); handleQR(code.data); } } }, 500); }
 
+        // ========== QR FILE SCAN ==========
         qrHiddenInput.onchange = async e => {
             const file = e.target.files[0]; if (!file) return;
             showToast("Processing...", true); const url = URL.createObjectURL(file); processImage.src = url;
@@ -756,6 +840,7 @@
             };
         };
 
+        // ========== QR DATA HANDLER ==========
         function parseQR(text) { const d = { church: '', christ: '', first: '', last: '', gender: '', phone: '' }; const parts = text.split(/[\n|]/).map(p => p.trim()).filter(p => p); for (const p of parts) { const l = p.toLowerCase(); if (l.includes('church')) d.church = p.split(/[:=]/)[1]?.trim() || p; else if (l.includes('christ') || l.includes('middle')) d.christ = p.split(/[:=]/)[1]?.trim() || p; else if (l.includes('first')) d.first = p.split(/[:=]/)[1]?.trim() || p; else if (l.includes('last') || l.includes('surname')) d.last = p.split(/[:=]/)[1]?.trim() || p; else if (l.includes('gender')) d.gender = p.split(/[:=]/)[1]?.trim() || p; else if (l.includes('phone') || l.includes('tel') || /^\+?\d{9,}$/.test(p)) d.phone = p.split(/[:=]/)[1]?.trim() || p; } if (!d.first && parts.length >= 4) { d.church = parts[0]||''; d.christ = parts[1]||''; d.first = parts[2]||''; d.last = parts[3]||''; d.gender = parts[4]||''; d.phone = parts[5]||''; } if (d.gender) { const g = d.gender.toLowerCase(); d.gender = (g.includes('male') || g === 'm') ? 'Male' : (g.includes('female') || g === 'f') ? 'Female' : ''; } return d; }
 
         function handleQR(text) {
@@ -766,6 +851,7 @@
             else { if (isAttendanceScan) { showToast("New student? Use registration", true); return; } else { showToast("New Student"); if (regCameraModal.classList.contains('active')) closeRegCam(); formModal.classList.add('active'); studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = ""; document.getElementById('church-name').value = d.church || ''; document.getElementById('christ-name').value = d.church || ''; document.getElementById('first-name').value = first; document.getElementById('last-name').value = last; document.getElementById('phone').value = d.phone || ''; if (d.gender === 'Male' || d.gender === 'Female') { const b = document.querySelector(`.gender-btn[data-value="${d.gender}"]`); if (b) { b.classList.add('selected'); genderInput.value = d.gender; } } } }
         }
 
+        // ========== EXPORT ==========
         const RECENT_T = 'recentDocTitles', RECENT_F = 'recentDocFiles';
         function getRecent(k) { return JSON.parse(localStorage.getItem(k) || '[]'); }
         function saveRecent(k, v) { let l = getRecent(k); l = l.filter(i => i !== v); l.unshift(v); if (l.length > 5) l.pop(); localStorage.setItem(k, JSON.stringify(l)); }
@@ -778,8 +864,10 @@
         titleDownloadBtn.addEventListener('click', () => {
             vibrate(30); const pf = parseInt(docPercentFilterInput.value) || 0;
             if (currentHistoryExportId) {
-                if (fbReady) { const hRef = fbRef(`history/${currentHistoryExportId}`); fb.onValue(hRef, snap => { const item = snap.val(); if (item) { const headers = ['#','Full Name','G']; let mx = 0; item.data.forEach(s => { s.marks.forEach((m, i) => { if (m && i+1 > mx) mx = i+1; }); }); for (let i = 1; i <= mx; i++) headers.push(`M${i}`); headers.push('TM'); headers.push('%'); const data = []; item.data.forEach(s => { if (parseFloat(s.percent) >= pf) { const r = [String(data.length+1), s.name, s.gender]; for (let m = 0; m < mx; m++) r.push(s.marks[m]||''); r.push(s.total); r.push(String(s.percent).replace('%','')); data.push(r); } }); genDocx(item.title, item.title.replace(/[^a-z0-9]/gi,'_'), { headers, data, maxMark: mx }); } }, { onlyOnce: true }); }
-                else { showToast("Offline - cannot export history", true); }
+                if (fbReady) {
+                    const hRef = fbRef(`history/${currentHistoryExportId}`);
+                    fb.onValue(hRef, snap => { const item = snap.val(); if (item) { const headers = ['#','Full Name','G']; let mx = 0; item.data.forEach(s => { s.marks.forEach((m, i) => { if (m && i+1 > mx) mx = i+1; }); }); for (let i = 1; i <= mx; i++) headers.push(`M${i}`); headers.push('TM'); headers.push('%'); const data = []; item.data.forEach(s => { if (parseFloat(s.percent) >= pf) { const r = [String(data.length+1), s.name, s.gender]; for (let m = 0; m < mx; m++) r.push(s.marks[m]||''); r.push(s.total); r.push(String(s.percent).replace('%','')); data.push(r); } }); genDocx(item.title, item.title.replace(/[^a-z0-9]/gi,'_'), { headers, data, maxMark: mx }); } }, { onlyOnce: true });
+                } else { showToast("Offline - cannot export history", true); }
                 currentHistoryExportId = null;
             } else { const pt = docPageTitleInput.value.trim(), ft = docFileTitleInput.value.trim(); if (!pt || !ft) { showToast("Enter text"); return; } saveRecent(RECENT_T, pt); saveRecent(RECENT_F, ft); genDocx(pt, ft, null, pf); }
             titlePopupModal.classList.remove('active');
@@ -789,13 +877,23 @@
         function getTableData(filterPct) { const rows = tableBody.querySelectorAll('tr'); if (!rows.length) return null; const mx = Math.max(getCurrentMaxAttendanceMark(), 1); const headers = ['#','Full Name','G']; for (let i = 1; i <= mx; i++) headers.push(`M${i}`); headers.push('TM'); headers.push('%'); const data = []; let c = 1; rows.forEach(r => { if (parseFloat(r.cells[30].textContent) >= filterPct) { const rd = [String(c), r.cells[1].textContent.trim(), r.cells[2].textContent.trim()]; for (let m = 1; m <= mx; m++) rd.push(r.cells[2+m].textContent.trim()||''); rd.push(r.cells[29].textContent.trim()); rd.push(r.cells[30].textContent.trim()); data.push(rd); c++; } }); return { headers, data, maxMark: mx }; }
 
         function genDocx(docTitle, fileTitle, pre, filterPct) {
-            try {
-                const td = pre || getTableData(filterPct || 0);
+            try { 
+                const td = pre || getTableData(filterPct || 0); 
                 if (!td || !td.data.length) { showToast("No data"); return; }
-                const { headers, data, maxMark } = td;
-                const cw = headers.map(h => { if (h === '#') return 500; if (h === 'Full Name') return 2400; if (h === 'TM') return 600; if (h === '%') return 700; return 500; });
-                const orient = headers.length > 10 ? 'landscape' : 'portrait';
-                let pw, ph; if (orient === 'portrait') { pw = 11906; ph = 16838; } else { pw = 16838; ph = 11906; }
+                const { headers, data, maxMark } = td; 
+                
+                // Widths logic maintained from previous fix
+                const cw = headers.map(h => { 
+                    if (h === '#') return 500; 
+                    if (h === 'Full Name') return 2400; 
+                    if (h === 'TM') return 600; 
+                    if (h === '%') return 700; 
+                    return 500; 
+                });
+                
+                const orient = headers.length > 10 ? 'landscape' : 'portrait'; 
+                let pw, ph; 
+                if (orient === 'portrait') { pw = 11906; ph = 16838; } else { pw = 16838; ph = 11906; }
                 const esc = s => s.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
                 let hc = headers.map((h,i) => { let bg='3C0028',co='E6B800'; if(h==='TM'||h==='%'){bg='E6B800';co='3C0028';} return `<w:tc><w:tcPr><w:tcW w:w="${cw[i]}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${bg}"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="${co}"/></w:rPr><w:t>${esc(h)}</w:t></w:r></w:p></w:tc>`; }).join('');
                 let dr = data.map(row => '<w:tr>' + row.map((c,i) => { const al = i===1?'left':'center'; return `<w:tc><w:tcPr><w:tcW w:w="${cw[i]}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="FFFFFF"/></w:tcPr><w:p><w:pPr><w:jc w:val="${al}"/></w:pPr><w:r><w:rPr><w:color w:val="000000"/></w:rPr><w:t>${esc(c)}</w:t></w:r></w:p></w:tc>`; }).join('') + '</w:tr>').join('');
@@ -808,91 +906,205 @@
             } catch(e) { console.error(e); showToast("DOCX Error"); }
         }
 
-        function createZip(files) {
-            const enc = new TextEncoder(), parts = [], cd = [];
-            let off = 0;
-            files.forEach(f => {
-                const content = enc.encode(f.content); const name = enc.encode(f.name);
-                const dt = new Date(); const time = ((dt.getHours()<<11)|(dt.getMinutes()<<5)|(dt.getSeconds()>>1)); const date = (((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate());
-                const lh = new Uint8Array(30); const lhv = new DataView(lh.buffer);
-                lhv.setUint32(0,0x04034b50,true); lhv.setUint16(4,20,true); lhv.setUint16(6,0x0800,true); lhv.setUint16(8,0,true);
-                lhv.setUint16(10,time,true); lhv.setUint16(12,date,true); lhv.setUint32(14,crc32(content),true);
-                lhv.setUint32(18,content.length,true); lhv.setUint32(22,content.length,true); lhv.setUint16(26,name.length,true);
-                parts.push(lh, name, content);
-                const ch = new Uint8Array(46); const chv = new DataView(ch.buffer);
-                chv.setUint32(0,0x02014b50,true); chv.setUint16(4,20,true); chv.setUint16(6,20,true); chv.setUint16(8,0x0800,true); chv.setUint16(10,0,true);
-                chv.setUint16(12,time,true); chv.setUint16(14,date,true); chv.setUint32(16,crc32(content),true);
-                chv.setUint32(20,content.length,true); chv.setUint32(24,content.length,true); chv.setUint16(28,name.length,true);
-                chv.setUint16(30,0,true); chv.setUint16(32,0,true); chv.setUint16(34,0,true); chv.setUint16(36,0,true);
-                chv.setUint32(38,0,true); chv.setUint32(42,off,true);
-                cd.push(ch, name);
-                off += 30 + name.length + content.length;
-            });
-            const cdOff = off; let cdSz = 0; cd.forEach(p => { parts.push(p); cdSz += p.length; });
-            const eocd = new Uint8Array(22); const eocdv = new DataView(eocd.buffer);
-            eocdv.setUint32(0,0x06054b50,true); eocdv.setUint16(4,0,true); eocdv.setUint16(6,0,true);
-            eocdv.setUint16(8,files.length,true); eocdv.setUint16(10,files.length,true);
-            eocdv.setUint32(12,cdSz,true); eocdv.setUint32(16,cdOff,true); eocdv.setUint16(20,0,true);
-            parts.push(eocd);
-            return new Blob(parts, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        function createZip(files) { 
+            const enc = new TextEncoder(), parts = [], cd = []; 
+            let off = 0; 
+            files.forEach(f => { 
+                const content = enc.encode(f.content); 
+                const name = enc.encode(f.name); 
+                const dt = new Date(); 
+                const time = ((dt.getHours()<<11)|(dt.getMinutes()<<5)|(dt.getSeconds()>>1)); 
+                const date = (((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate()); 
+                const lh = new Uint8Array(30); 
+                const lhv = new DataView(lh.buffer); 
+                lhv.setUint32(0,0x04034b50,true); 
+                lhv.setUint16(4,20,true); 
+                lhv.setUint16(6,0x0800,true); 
+                lhv.setUint16(8,0,true); 
+                lhv.setUint16(10,time,true);
+                lhv.setUint16(12,date,true);
+                lhv.setUint32(14,crc32(content),true);
+                lhv.setUint32(18,content.length,true);
+                lhv.setUint32(22,content.length,true);
+                lhv.setUint16(26,name.length,true);
+                parts.push(lh, name, content); 
+                const ch = new Uint8Array(46); 
+                const chv = new DataView(ch.buffer); 
+                chv.setUint32(0,0x02014b50,true); 
+                chv.setUint16(4,20,true); 
+                chv.setUint16(6,20,true); 
+                chv.setUint16(8,0x0800,true); 
+                chv.setUint16(10,0,true); 
+                chv.setUint16(12,time,true);
+                chv.setUint16(14,date,true);
+                chv.setUint32(16,crc32(content),true);
+                chv.setUint32(20,content.length,true);
+                chv.setUint32(24,content.length,true);
+                chv.setUint16(28,name.length,true);
+                chv.setUint16(30,0,true); 
+                chv.setUint16(32,0,true); 
+                chv.setUint16(34,0,true); 
+                chv.setUint16(36,0,true); 
+                chv.setUint32(38,0,true); 
+                chv.setUint32(42,off,true); 
+                cd.push(ch, name); 
+                off += 30 + name.length + content.length; 
+            }); 
+            const cdOff = off; 
+            let cdSz = 0; 
+            cd.forEach(p => { parts.push(p); cdSz += p.length; }); 
+            const eocd = new Uint8Array(22); 
+            const eocdv = new DataView(eocd.buffer); 
+            eocdv.setUint32(0,0x06054b50,true);
+            eocdv.setUint16(4,0,true); 
+            eocdv.setUint16(6,0,true); 
+            eocdv.setUint16(8,files.length,true);
+            eocdv.setUint16(10,files.length,true);
+            eocdv.setUint32(12,cdSz,true);
+            eocdv.setUint32(16,cdOff,true);
+            eocdv.setUint16(20,0,true); 
+            parts.push(eocd); 
+            return new Blob(parts, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }); 
+        }
+        
+        function crc32(data) { 
+            const table = new Uint32Array(256); 
+            for (let i=0;i<256;i++) { 
+                let c=i; 
+                for(let j=0;j<8;j++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); 
+                table[i]=c; 
+            } 
+            let crc=0xFFFFFFFF; 
+            for(let i=0;i<data.length;i++) crc=(crc>>>8)^table[(crc^data[i])&0xFF]; 
+            return (crc^0xFFFFFFFF)>>>0; 
         }
 
-        function crc32(data) { const table = new Uint32Array(256); for (let i=0;i<256;i++) { let c=i; for(let j=0;j<8;j++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[i]=c; } let crc=0xFFFFFFFF; for(let i=0;i<data.length;i++) crc=(crc>>>8)^table[(crc^data[i])&0xFF]; return (crc^0xFFFFFFFF)>>>0; }
-
-        const manifestContent = { name: "Attendance System", short_name: "Attendance", start_url: "./", display: "standalone", background_color: "#000", theme_color: "#3C0028", icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }] };
+        // ========== PWA ==========
+        const manifestContent = { 
+            short_name: "Attendance", 
+            start_url: "./", 
+            display: "standalone", 
+            background_color: "#000", 
+            theme_color: "#3C0028", 
+            icons: [{ 
+                src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E", 
+                sizes: "192x192", 
+                type: "image/svg+xml" 
+            }] 
+        };
         document.getElementById('app-manifest').href = URL.createObjectURL(new Blob([JSON.stringify(manifestContent)], { type: 'application/json' }));
         if ('serviceWorker' in navigator) { const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js']; const sw = `const CN='AttendanceApp_v2',U=${JSON.stringify(urls)};self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match('./')))});`; navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{}); }
 
+        // ========== WINDOW LOAD ==========
         window.addEventListener('load', async () => {
             const rem = getRemaining(); const st = JSON.parse(localStorage.getItem('attendanceState') || 'null');
             if (rem > 0 && st && st.isOpen) { isAttendanceOpen = false; currentAttendanceMark = st.currentMark; markedThisMark = new Set(st.markedSet || []); startCountdown(rem); showToast(`Resumed: ${rem}s`, true); }
             else if (rem <= 0 && st && st.isOpen) { currentAttendanceMark = st.currentMark; markedThisMark = new Set(st.markedSet || []); markAbsentAfterTimeout(); clearCountdownEnd(); localStorage.setItem('attendanceState', JSON.stringify({ ...st, isOpen: false })); }
         });
 
+        // ========== BACK BUTTON & ESC ==========
         window.addEventListener('popstate', () => { [historyViewModal, historyModal, settingsPanel, listOverlay, formModal, titlePopupModal, archiveTitleModal, detailPopup, confirmModal].forEach(m => m.classList.remove('active')); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') { [listOverlay, formModal, regContextMenu, exportContextMenu, detailPopup, titlePopupModal, archiveTitleModal, settingsPanel, historyModal, historyViewModal].forEach(m => m.classList.remove('active')); closeCam(); closeRegCam(); historyDeleteModal.style.display = 'none'; if (confirmModal.classList.contains('active')) hideConfirm(); } });
 
+        // ========== EVENT LISTENERS FOR ONLINE/OFFLINE ==========
         window.addEventListener('online', async () => {
-            updateBadges(); showToast("Back online! Syncing...", true);
-            if (!fbReady) await loadFirebase();
-            if (fbReady) { await syncLocalToCloud(); loadFirebaseData(); loadHistoryFromFirebase(); }
+            updateBadges();
+            showToast("Back online! Syncing...", true);
+            
+            if (!fbReady) {
+                await loadFirebase();
+            }
+            
+            if (fbReady) {
+                await syncLocalToCloud();
+                loadFirebaseData(); 
+                loadHistoryFromFirebase();
+            }
         });
-        window.addEventListener('offline', () => { updateBadges(); showToast("Offline mode", true); });
 
+        window.addEventListener('offline', () => {
+            updateBadges();
+            showToast("Offline mode", true);
+        });
+
+        // ================================================================
+        // ===== APP INITIALIZATION =========================
+        // ================================================================
         async function initApp() {
             loadFromLocalStorage();
             loadHistoryFromLocalStorage();
+            
             const loaded = await loadFirebase();
+
             if (loaded) {
                 fb.onAuth(fb.auth, async user => {
                     if (user) {
                         localStorage.setItem('offline_auth', '1');
                         appLockModal.style.display = 'none';
                         logoutBtn.style.display = 'flex';
-                        if (navigator.onLine) { await syncLocalToCloud(); loadFirebaseData(); loadHistoryFromFirebase(); }
-                        else updateBadges();
+                        
+                        if (navigator.onLine) {
+                            await syncLocalToCloud();
+                            loadFirebaseData(); 
+                            loadHistoryFromFirebase();
+                        } else {
+                            updateBadges();
+                        }
+                        
                     } else {
                         appLockModal.style.display = 'flex';
                         logoutBtn.style.display = 'none';
-                        lockInput.value = ''; lockError.style.display = 'none'; lockInput.focus();
+                        lockInput.value = '';
+                        lockError.style.display = 'none';
+                        lockInput.focus();
                     }
                 });
-                lockBtn.addEventListener('click', async () => { try { await fb.signIn(fb.auth, EMAIL, lockInput.value); } catch(e) { lockError.style.display = 'block'; lockInput.value = ''; } });
+
+                lockBtn.addEventListener('click', async () => {
+                    try { await fb.signIn(fb.auth, EMAIL, lockInput.value); }
+                    catch(e) { lockError.style.display = 'block'; lockInput.value = ''; }
+                });
                 lockInput.addEventListener('keyup', e => { if (e.key === 'Enter') lockBtn.click(); });
                 logoutBtn.addEventListener('click', async () => { await fb.signOut(fb.auth); });
             } else {
-                console.log('[Init] Offline mode');
-                updateBadges(); showToast('Offline Mode', true);
+                console.log('[Init] Offline mode — using localStorage data');
+                updateBadges();
+                showToast('Offline Mode', true);
+
                 const wasAuth = localStorage.getItem('offline_auth');
-                if (wasAuth) { appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex'; }
-                else { appLockModal.style.display = 'flex'; lockInput.focus(); }
-                lockBtn.addEventListener('click', () => { if (lockInput.value === 'Debebe!') { localStorage.setItem('offline_auth', '1'); appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex'; } else { lockError.style.display = 'block'; lockInput.value = ''; lockInput.focus(); } });
+                if (wasAuth) {
+                    appLockModal.style.display = 'none';
+                    logoutBtn.style.display = 'flex';
+                } else {
+                    appLockModal.style.display = 'flex';
+                    lockInput.focus();
+                }
+
+                lockBtn.addEventListener('click', () => {
+                    if (lockInput.value === 'Debebe!') {
+                        localStorage.setItem('offline_auth', '1');
+                        appLockModal.style.display = 'none';
+                        logoutBtn.style.display = 'flex';
+                    } else {
+                        lockError.style.display = 'block';
+                        lockInput.value = '';
+                        lockInput.focus();
+                    }
+                });
                 lockInput.addEventListener('keyup', e => { if (e.key === 'Enter') lockBtn.click(); });
-                logoutBtn.addEventListener('click', () => { localStorage.removeItem('offline_auth'); appLockModal.style.display = 'flex'; logoutBtn.style.display = 'none'; lockInput.value = ''; lockError.style.display = 'none'; lockInput.focus(); });
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('offline_auth');
+                    appLockModal.style.display = 'flex';
+                    logoutBtn.style.display = 'none';
+                    lockInput.value = '';
+                    lockError.style.display = 'none';
+                    lockInput.focus();
+                });
             }
         }
 
         initApp();
+
     </script>
 </body>
 </html>
