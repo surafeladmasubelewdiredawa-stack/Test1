@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Attendance System</title>
-    <!-- Logo Kept -->
+    <!-- Logo and Icons kept as requested -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="manifest" id="app-manifest">
@@ -26,7 +26,6 @@
         .btn{border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;box-shadow:0 4px 8px rgba(0,0,0,.3);background:#E6B800;color:#3C0028;font-size:26px;font-weight:600;user-select:none}
         .top-right{position:absolute;top:20px;right:20px;display:flex;flex-direction:column;gap:15px;z-index:10}
         .top-left{position:absolute;top:20px;left:20px;z-index:10}
-        /* Centered buttons on front page */
         .center{position:absolute;top:80%;left:50%;transform:translateX(-50%);display:flex;gap:140px;align-items:center;justify-content:center;z-index:10}
         .top-right .btn{width:50px;height:50px;font-size:20px}
         .center .btn{width:100px;height:100px;font-size:44px}
@@ -236,7 +235,7 @@
         </div>
     </div>
 
-    <!-- Front Page Body: Text Removed, Only Buttons -->
+    <!-- Front Page Body: Text Removed, Kept buttons centered -->
     <div class="center">
         <button class="btn" id="toggle-scan-btn" title="Attendance Camera"><i class="fa-solid fa-camera"></i></button>
         <button class="btn" id="file-btn" title="Attendance File Scan"><i class="fa-solid fa-file-image"></i></button>
@@ -853,7 +852,7 @@
             if (!first || !last) { showToast("Invalid QR", true); return; }
             const row = findStudentRow(fullName);
             if (row) { if (isAttendanceScan) { if (isAttendanceOpen && currentAttendanceMark) { if (!markedThisMark.has(fullName.toLowerCase())) { markNextAvailableMark(row); markedThisMark.add(fullName.toLowerCase()); showToast(`Scanned: ${fullName}`, true); } else showToast(`Already M${currentAttendanceMark}`, true); } else { const nm = getCurrentMaxAttendanceMark() + 1; if (nm > 26) { showToast("All 26 filled", true); return; } currentAttendanceMark = nm; markedThisMark.clear(); startCountdown(); markNextAvailableMark(row); markedThisMark.add(fullName.toLowerCase()); showToast(`Scanned: ${fullName}`, true); } } else { showToast("Already registered!"); if (regCameraModal.classList.contains('active')) scanRegCam(); } }
-            else { if (isAttendanceScan) { showToast("New student? Use registration", true); return; } else { showToast("New Student"); if (regCameraModal.classList.contains('active')) closeRegCam(); formModal.classList.add('active'); studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = ""; document.getElementById('church-name').value = d.church || ''; document.getElementById('christ-name').value = d.christ || ''; document.getElementById('first-name').value = first; document.getElementById('last-name').value = last; document.getElementById('phone').value = d.phone || ''; if (d.gender === 'Male' || d.gender === 'Female') { const b = document.querySelector(`.gender-btn[data-value="${d.gender}"]`); if (b) { b.classList.add('selected'); genderInput.value = d.gender; } } } }
+            else { if (isAttendanceScan) { showToast("New student? Use registration", true); return; } else { showToast("New Student"); if (regCameraModal.classList.contains('active')) closeRegCam(); formModal.classList.add('active'); studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = ""; document.getElementById('church-name').value = d.church || ''; document.getElementById('christ-name').value = d.church || ''; document.getElementById('first-name').value = first; document.getElementById('last-name').value = last; document.getElementById('phone').value = d.phone || ''; if (d.gender === 'Male' || d.gender === 'Female') { const b = document.querySelector(`.gender-btn[data-value="${d.gender}"]`); if (b) { b.classList.add('selected'); genderInput.value = d.gender; } } } }
         }
 
         // ========== EXPORT ==========
@@ -1103,4 +1102,4 @@
 
     </script>
 </body>
-</html>
+</html> 
