@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Attendance System</title>
-    <!-- Logo and Icons kept as requested -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="manifest" id="app-manifest">
@@ -235,7 +234,6 @@
         </div>
     </div>
 
-    <!-- Front Page Body: Text Removed, Kept buttons centered -->
     <div class="center">
         <button class="btn" id="toggle-scan-btn" title="Attendance Camera"><i class="fa-solid fa-camera"></i></button>
         <button class="btn" id="file-btn" title="Attendance File Scan"><i class="fa-solid fa-file-image"></i></button>
@@ -801,10 +799,6 @@
         document.getElementById('close-list').addEventListener('click', () => { vibrate(30); listOverlay.classList.remove('active'); });
         exportMenuBtn.addEventListener('click', function (e) { e.stopPropagation(); e.preventDefault(); vibrate(30); animateButton(this); exportContextMenu.style.top = '80px'; exportContextMenu.style.right = '75px'; exportContextMenu.style.left = 'auto'; exportContextMenu.classList.toggle('active'); regContextMenu.classList.remove('active'); });
         regMenuBtn.addEventListener('click', function (e) { e.stopPropagation(); e.preventDefault(); vibrate(30); animateButton(this); regContextMenu.style.top = '80px'; regContextMenu.style.right = '20px'; regContextMenu.style.left = 'auto'; regContextMenu.classList.toggle('active'); exportContextMenu.classList.remove('active'); });
-        document.getElementById('cancel-register').addEventListener('click', () => formModal.classList.remove('active'));
-        document.getElementById('opt-manual').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); formModal.classList.add('active'); studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = ""; });
-        document.getElementById('opt-qr-file').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); isAttendanceScan = false; qrHiddenInput.click(); });
-        document.getElementById('opt-qr-camera').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); isAttendanceScan = false; openRegCam(); });
         document.addEventListener('click', e => { if (exportContextMenu.classList.contains('active') && !exportContextMenu.contains(e.target) && e.target !== exportMenuBtn && !exportMenuBtn.contains(e.target)) exportContextMenu.classList.remove('active'); if (regContextMenu.classList.contains('active') && !regContextMenu.contains(e.target) && e.target !== regMenuBtn && !regMenuBtn.contains(e.target)) regContextMenu.classList.remove('active'); if (settingsPanel.classList.contains('active') && !settingsPanel.contains(e.target) && e.target !== settingBtn && !settingBtn.contains(e.target)) settingsPanel.classList.remove('active'); });
 
         // ========== TABLE DOUBLE-CLICK ==========
@@ -886,7 +880,6 @@
                 if (!td || !td.data.length) { showToast("No data"); return; }
                 const { headers, data, maxMark } = td; 
                 
-                // Widths logic maintained from previous fix
                 const cw = headers.map(h => { 
                     if (h === '#') return 500; 
                     if (h === 'Full Name') return 2400; 
@@ -984,7 +977,20 @@
         }
 
         // ========== PWA ==========
-        const manifestContent = { name: "Attendance System", short_name: "Attendance", start_url: "./", display: "standalone", background_color: "#000", theme_color: "#3C0028", icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }] };
+        // HIDDEN FROM HOME SCREEN: name uses short_name only
+        const manifestContent = { 
+            name: "Attendance", 
+            short_name: "Attendance", 
+            start_url: "./", 
+            display: "standalone", 
+            background_color: "#000", 
+            theme_color: "#3C0028", 
+            icons: [{ 
+                src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E", 
+                sizes: "192x192", 
+                type: "image/svg+xml" 
+            }] 
+        };
         document.getElementById('app-manifest').href = URL.createObjectURL(new Blob([JSON.stringify(manifestContent)], { type: 'application/json' }));
         if ('serviceWorker' in navigator) { const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js']; const sw = `const CN='AttendanceApp_v2',U=${JSON.stringify(urls)};self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match('./')))});`; navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{}); }
 
@@ -1024,7 +1030,6 @@
         // ===== APP INITIALIZATION =========================
         // ================================================================
         async function initApp() {
-            // 1. Load Local First (Instant Display)
             loadFromLocalStorage();
             loadHistoryFromLocalStorage();
             
@@ -1038,9 +1043,8 @@
                         logoutBtn.style.display = 'flex';
                         
                         if (navigator.onLine) {
-                            // SYNC FIRST, THEN LOAD
                             await syncLocalToCloud();
-                            loadFirebaseData();
+                            loadFirebaseData(); 
                             loadHistoryFromFirebase();
                         } else {
                             updateBadges();
