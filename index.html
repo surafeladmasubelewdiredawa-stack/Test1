@@ -192,7 +192,7 @@
 
     <div id="app-lock-modal">
         <div class="lock-content">
-          <!--  <div class="lock-title">Enter Password</div> -->
+            <div class="lock-title">Enter Password</div>
             <input type="password" id="lock-input" placeholder="------" autofocus>
             <button id="lock-btn">Unlock</button>
             <div id="lock-error">Incorrect Password</div>
@@ -843,9 +843,12 @@
         }
 
         // ========== PWA MANIFEST ==========
+        // name → App Switcher / Recent Apps ላይ "Attendance System" ይታያል
+        // short_name → "." ባት (dot) — Home screen ላይ ከ icon ስር ጥቅም ነጥብ ብቻ ይታያል
+        // Cache name ወደ v3 ተቀይሯል — ድሮውን ን መሰረዝ ይገባል
         const manifestContent = {
             name: "Attendance System",
-            short_name: " ",
+            short_name: ".",
             start_url: "./",
             display: "standalone",
             background_color: "#000",
@@ -858,9 +861,10 @@
         };
         document.getElementById('app-manifest').href = URL.createObjectURL(new Blob([JSON.stringify(manifestContent)], { type: 'application/json' }));
 
+        // Service Worker — cache name v3 (ከ v2 ወደ v3 ተቀይሯል)
         if ('serviceWorker' in navigator) {
             const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'];
-            const sw = `const CN='AttendanceApp_v4',U=${JSON.stringify(urls)};self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match('./')))});`;
+            const sw = `const CN='AttendanceApp_v3',U=${JSON.stringify(urls)};self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match('./')))});`;
             navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
         }
 
