@@ -192,8 +192,7 @@
 
     <div id="app-lock-modal">
         <div class="lock-content">
-            <div class="lock-title">Enter Password</div>
-            <input type="password" id="lock-input" placeholder="------" autofocus>
+            <input type="password" id="lock-input" placeholder="Enter Password" autofocus>
             <button id="lock-btn">Unlock</button>
             <div id="lock-error">Incorrect Password</div>
         </div>
@@ -235,8 +234,8 @@
     </div>
 
     <div class="center">
-        <button class="btn" id="toggle-scan-btn" title="Attendance Camera"><i class="fa-solid fa-camera"></i></button>
-        <button class="btn" id="file-btn" title="Attendance File Scan"><i class="fa-solid fa-file-image"></i></button>
+        <button class="btn" id="toggle-scan-btn" title="Attendance Camera"><i class="fa-solid fa-expand"></i></button>
+        <button class="btn" id="file-btn" title="Attendance File Scan"><i class="fa-solid fa-paperclip"></i></button>
     </div>
 
     <div id="list-overlay" class="list-overlay">
@@ -440,7 +439,7 @@
 
         const toggleScanBtn = document.getElementById('toggle-scan-btn');
         const fileBtn = document.getElementById('file-btn');
-        const iconCamera = '<i class="fa-solid fa-camera"></i>';
+        const iconExpand = '<i class="fa-solid fa-expand"></i>';
         const iconStop = '<i class="fa-solid fa-stop"></i>';
         const countdownEl = document.getElementById('countdown-timer');
         const countdownNumber = document.getElementById('countdown-number');
@@ -732,7 +731,7 @@
         toggleScanBtn.addEventListener('click', function () { vibrate(30); animateButton(this); if (cameraModal.classList.contains('active')) closeCam(); else { isAttendanceScan = true; openCam(); } });
         fileBtn.addEventListener('click', function () { vibrate(30); animateButton(this); isAttendanceScan = true; qrHiddenInput.click(); });
         async function openCam() { cameraModal.classList.add('active'); toggleScanBtn.classList.add('camera-running'); toggleScanBtn.innerHTML = iconStop; toggleScanBtn.title = "Stop Camera"; try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); cameraFeed.srcObject = videoStream; scanCam(); } catch(e) { showToast("Camera error"); closeCam(); } }
-        function closeCam() { if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; } cameraModal.classList.remove('active'); toggleScanBtn.classList.remove('camera-running'); toggleScanBtn.innerHTML = iconCamera; toggleScanBtn.title = "Open Camera"; }
+        function closeCam() { if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; } cameraModal.classList.remove('active'); toggleScanBtn.classList.remove('camera-running'); toggleScanBtn.innerHTML = iconExpand; toggleScanBtn.title = "Open Camera"; }
         let camInterval = null;
         function scanCam() { if (camInterval) clearInterval(camInterval); const ctx = cameraCanvas.getContext('2d'); camInterval = setInterval(() => { if (!cameraModal.classList.contains('active') || !videoStream) { clearInterval(camInterval); return; } if (cameraFeed.readyState === cameraFeed.HAVE_ENOUGH_DATA) { cameraCanvas.height = cameraFeed.videoHeight; cameraCanvas.width = cameraFeed.videoWidth; ctx.drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height); const img = ctx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height); const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" }); if (code) handleQR(code.data); } }, 500); }
         async function openRegCam() { regCameraModal.classList.add('active'); try { regVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); regCameraFeed.srcObject = regVideoStream; scanRegCam(); } catch(e) { showToast("Camera error"); closeRegCam(); } }
@@ -759,7 +758,7 @@
             if (!first || !last) { showToast("Invalid QR", true); return; }
             const row = findStudentRow(fullName);
             if (row) { if (isAttendanceScan) { if (isAttendanceOpen && currentAttendanceMark) { if (!markedThisMark.has(fullName.toLowerCase())) { markNextAvailableMark(row); markedThisMark.add(fullName.toLowerCase()); showToast(`Scanned: ${fullName}`, true); } else showToast(`Already M${currentAttendanceMark}`, true); } else { const nm = getCurrentMaxAttendanceMark() + 1; if (nm > 26) { showToast("All 26 filled", true); return; } currentAttendanceMark = nm; markedThisMark.clear(); startCountdown(); markNextAvailableMark(row); markedThisMark.add(fullName.toLowerCase()); showToast(`Scanned: ${fullName}`, true); } } else { showToast("Already registered!"); if (regCameraModal.classList.contains('active')) scanRegCam(); } }
-            else { if (isAttendanceScan) { showToast("New student? Use registration", true); return; } else { showToast("New Student"); if (regCameraModal.classList.contains('active')) closeRegCam(); formModal.classList.add('active'); studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = ""; document.getElementById('church-name').value = d.church || ''; document.getElementById('christ-name').value = d.church || ''; document.getElementById('first-name').value = first; document.getElementById('last-name').value = last; document.getElementById('phone').value = d.phone || ''; if (d.gender === 'Male' || d.gender === 'Female') { const b = document.querySelector(`.gender-btn[data-value="${d.gender}"]`); if (b) { b.classList.add('selected'); genderInput.value = d.gender; } } } }
+            else { if (isAttendanceScan) { showToast("New student? Use registration", true); return; } else { showToast("New Student"); if (regCameraModal.classList.contains('active')) closeRegCam(); formModal.classList.add('active'); studentForm.reset(); genderBtns.forEach(b => b.classList.remove('selected')); genderInput.value = ""; document.getElementById('church-name').value = d.church || ''; document.getElementById('christ-name').value = d.christ || ''; document.getElementById('first-name').value = first; document.getElementById('last-name').value = last; document.getElementById('phone').value = d.phone || ''; if (d.gender === 'Male' || d.gender === 'Female') { const b = document.querySelector(`.gender-btn[data-value="${d.gender}"]`); if (b) { b.classList.add('selected'); genderInput.value = d.gender; } } } }
         }
 
         const RECENT_T = 'recentDocTitles', RECENT_F = 'recentDocFiles';
@@ -787,64 +786,233 @@
         function getTableData(filterPct) { const rows = tableBody.querySelectorAll('tr'); if (!rows.length) return null; const mx = Math.max(getCurrentMaxAttendanceMark(), 1); const headers = ['#','Full Name','G']; for (let i = 1; i <= mx; i++) headers.push(`M${i}`); headers.push('TM'); headers.push('%'); const data = []; let c = 1; rows.forEach(r => { if (parseFloat(r.cells[30].textContent) >= filterPct) { const rd = [String(c), r.cells[1].textContent.trim(), r.cells[2].textContent.trim()]; for (let m = 1; m <= mx; m++) rd.push(r.cells[2+m].textContent.trim()||''); rd.push(r.cells[29].textContent.trim()); rd.push(r.cells[30].textContent.trim()); data.push(rd); c++; } }); return { headers, data, maxMark: mx }; }
 
         function genDocx(docTitle, fileTitle, pre, filterPct) {
-            try { 
-                const td = pre || getTableData(filterPct || 0); 
+            try {
+                const td = pre || getTableData(filterPct || 0);
                 if (!td || !td.data.length) { showToast("No data"); return; }
-                const { headers, data, maxMark } = td; 
-                const cw = headers.map(h => { if (h === '#') return 500; if (h === 'Full Name') return 2400; if (h === 'TM') return 600; if (h === '%') return 700; return 500; });
-                const orient = headers.length > 10 ? 'landscape' : 'portrait'; 
-                let pw, ph; 
+                const { headers, data, maxMark } = td;
+                const enc = new TextEncoder();
+                const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+                const orient = headers.length > 10 ? 'landscape' : 'portrait';
+                let pw, ph;
                 if (orient === 'portrait') { pw = 11906; ph = 16838; } else { pw = 16838; ph = 11906; }
-                const esc = s => s.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
-                let hc = headers.map((h,i) => { let bg='3C0028',co='E6B800'; if(h==='TM'||h==='%'){bg='E6B800';co='3C0028';} return `<w:tc><w:tcPr><w:tcW w:w="${cw[i]}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${bg}"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="${co}"/></w:rPr><w:t>${esc(h)}</w:t></w:r></w:p></w:tc>`; }).join('');
-                let dr = data.map(row => '<w:tr>' + row.map((c,i) => { const al = i===1?'left':'center'; return `<w:tc><w:tcPr><w:tcW w:w="${cw[i]}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="FFFFFF"/></w:tcPr><w:p><w:pPr><w:jc w:val="${al}"/></w:pPr><w:r><w:rPr><w:color w:val="000000"/></w:rPr><w:t>${esc(c)}</w:t></w:r></w:p></w:tc>`; }).join('') + '</w:tr>').join('');
-                const gc = cw.map(w => `<w:gridCol w:w="${w}"/>`).join('\n');
-                const xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="36"/></w:rPr><w:t>${esc(docTitle)}</w:t></w:r></w:p><w:p/><w:tbl><w:tblPr><w:jc w:val="center"/><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/></w:tblBorders></w:tblPr><w:tblGrid>${gc}</w:tblGrid><w:tr>${hc}</w:tr>${dr}</w:tbl><w:sectPr><w:pgSz w:w="${pw}" w:h="${ph}" w:orient="${orient}"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>`;
-                const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
-                const rl = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
-                const files = [{ name: '[Content_Types].xml', content: ct }, { name: '_rels/.rels', content: rl }, { name: 'word/document.xml', content: xml }];
-                const blob = createZip(files); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${fileTitle.replace(/[^a-z0-9]/gi,'_').toLowerCase()}_${new Date().toISOString().slice(0,10)}.docx`; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast("DOCX Downloaded!");
-            } catch(e) { console.error(e); showToast("DOCX Error"); }
+
+                const margin = 1440;
+                const usable = (orient === 'portrait' ? pw : ph) - margin * 2;
+
+                const nameIdx = headers.indexOf('Full Name');
+                const markCols = headers.filter(h => h !== '#' && h !== 'Full Name' && h !== 'G' && h !== 'TM' && h !== '%').length;
+
+                const nameW = Math.min(Math.max(Math.floor(usable * 0.22), 1200), 3500);
+                const numW = Math.min(Math.floor(usable * 0.04), 600);
+                const tmW = Math.min(Math.floor(usable * 0.05), 700);
+                const pctW = Math.min(Math.floor(usable * 0.06), 800);
+                const remaining = usable - nameW - numW - tmW - pctW;
+                const markW = Math.min(Math.max(Math.floor(remaining / Math.max(markCols, 1)), 300), 600);
+
+                const colWidths = headers.map(h => {
+                    if (h === '#') return numW;
+                    if (h === 'Full Name') return nameW;
+                    if (h === 'G') return numW;
+                    if (h === 'TM') return tmW;
+                    if (h === '%') return pctW;
+                    return markW;
+                });
+
+                const totalW = colWidths.reduce((a, b) => a + b, 0);
+
+                function makeCell(text, isHeader, colIdx) {
+                    const w = colWidths[colIdx] || 500;
+                    const bg = isHeader ? (text === 'TM' || text === '%' ? 'E6B800' : '3C0028') : 'FFFFFF';
+                    const co = isHeader ? (text === 'TM' || text === '%' ? '3C0028' : 'E6B800') : '000000';
+                    const bold = isHeader ? '<w:b/>' : '';
+                    const jc = (colIdx === nameIdx) ? 'left' : 'center';
+                    return `<w:tc>` +
+                        `<w:tcPr>` +
+                            `<w:tcW w:w="${w}" w:type="dxa"/>` +
+                            `<w:shd w:val="clear" w:color="auto" w:fill="${bg}"/>` +
+                        `</w:tcPr>` +
+                        `<w:p>` +
+                            `<w:pPr><w:jc w:val="${jc}"/><w:spacing w:before="20" w:after="20"/></w:pPr>` +
+                            `<w:r>` +
+                                `<w:rPr>${bold}<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${co}"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>` +
+                                `<w:t xml:space="preserve">${esc(text)}</w:t>` +
+                            `</w:r>` +
+                        `</w:p>` +
+                    `</w:tc>`;
+                }
+
+                const headerRow = headers.map((h, i) => makeCell(h, true, i)).join('');
+                const dataRows = data.map(row => '<w:tr>' + row.map((c, i) => makeCell(c, false, i)).join('') + '</w:tr>').join('');
+                const gridCols = colWidths.map(w => `<w:gridCol w:w="${w}"/>`).join('\n');
+
+                const xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                    `<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"` +
+                    ` xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"` +
+                    ` xmlns:o="urn:schemas-microsoft-com:office:office"` +
+                    ` xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"` +
+                    ` xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"` +
+                    ` xmlns:v="urn:schemas-microsoft-com:vml"` +
+                    ` xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"` +
+                    ` xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"` +
+                    ` xmlns:w10="urn:schemas-microsoft-com:office:word"` +
+                    ` xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"` +
+                    ` xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"` +
+                    ` xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"` +
+                    ` xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"` +
+                    ` xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"` +
+                    ` xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"` +
+                    ` xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"` +
+                    ` mc:Ignorable="w14 wp14">` +
+                    `<w:body>` +
+                        `<w:p>` +
+                            `<w:pPr><w:jc w:val="center"/><w:spacing w:after="200"/></w:pPr>` +
+                            `<w:r>` +
+                                `<w:rPr><w:b/><w:sz w:val="32"/><w:szCs w:val="32"/><w:color w:val="3C0028"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>` +
+                                `<w:t>${esc(docTitle)}</w:t>` +
+                            `</w:r>` +
+                        `</w:p>` +
+                        `<w:tbl>` +
+                            `<w:tblPr>` +
+                                `<w:tblStyle w:val="TableGrid"/>` +
+                                `<w:tblW w:w="${totalW}" w:type="dxa"/>` +
+                                `<w:jc w:val="center"/>` +
+                                `<w:tblBorders>` +
+                                    `<w:top w:val="single" w:sz="4" w:space="0" w:color="999999"/>` +
+                                    `<w:left w:val="single" w:sz="4" w:space="0" w:color="999999"/>` +
+                                    `<w:bottom w:val="single" w:sz="4" w:space="0" w:color="999999"/>` +
+                                    `<w:right w:val="single" w:sz="4" w:space="0" w:color="999999"/>` +
+                                    `<w:insideH w:val="single" w:sz="4" w:space="0" w:color="999999"/>` +
+                                    `<w:insideV w:val="single" w:sz="4" w:space="0" w:color="999999"/>` +
+                                `</w:tblBorders>` +
+                                `<w:tblCellMar>` +
+                                    `<w:top w:w="40" w:type="dxa"/>` +
+                                    `<w:left w:w="40" w:type="dxa"/>` +
+                                    `<w:bottom w:w="40" w:type="dxa"/>` +
+                                    `<w:right w:w="40" w:type="dxa"/>` +
+                                `</w:tblCellMar>` +
+                            `</w:tblPr>` +
+                            `<w:tblGrid>${gridCols}</w:tblGrid>` +
+                            `<w:tr>${headerRow}</w:tr>` +
+                            dataRows +
+                        `</w:tbl>` +
+                        `<w:sectPr>` +
+                            `<w:pgSz w:w="${pw}" w:h="${ph}" w:orient="${orient}"/>` +
+                            `<w:pgMar w:top="${margin}" w:right="${margin}" w:bottom="${margin}" w:left="${margin}" w:header="720" w:footer="720" w:gutter="0"/>` +
+                        `</w:sectPr>` +
+                    `</w:body>` +
+                    `</w:document>`;
+
+                const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                    `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+                    `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
+                    `<Default Extension="xml" ContentType="application/xml"/>` +
+                    `<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>` +
+                    `</Types>`;
+
+                const rl = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+                    `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>` +
+                    `</Relationships>`;
+
+                const files = [
+                    { name: '[Content_Types].xml', content: ct },
+                    { name: '_rels/.rels', content: rl },
+                    { name: 'word/document.xml', content: xml }
+                ];
+
+                const blob = createZip(files);
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `${fileTitle.replace(/[^a-z0-9]/gi,'_').toLowerCase()}_${new Date().toISOString().slice(0,10)}.docx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+                showToast("DOCX Downloaded!");
+            } catch(e) { console.error("DOCX Error:", e); showToast("DOCX Error"); }
         }
 
-        function createZip(files) { 
-            const enc = new TextEncoder(), parts = [], cd = []; 
-            let off = 0; 
-            files.forEach(f => { 
-                const content = enc.encode(f.content); 
-                const name = enc.encode(f.name); 
-                const dt = new Date(); 
-                const time = ((dt.getHours()<<11)|(dt.getMinutes()<<5)|(dt.getSeconds()>>1)); 
-                const date = (((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate()); 
-                const lh = new Uint8Array(30); const lhv = new DataView(lh.buffer); 
-                lhv.setUint32(0,0x04034b50,true); lhv.setUint16(4,20,true); lhv.setUint16(6,0x0800,true); lhv.setUint16(8,0,true); 
-                lhv.setUint16(10,time,true); lhv.setUint16(12,date,true);
-                lhv.setUint32(14,crc32(content),true); lhv.setUint32(18,content.length,true); lhv.setUint32(22,content.length,true);
-                lhv.setUint16(26,name.length,true);
-                parts.push(lh, name, content); 
-                const ch = new Uint8Array(46); const chv = new DataView(ch.buffer); 
-                chv.setUint32(0,0x02014b50,true); chv.setUint16(4,20,true); chv.setUint16(6,20,true); chv.setUint16(8,0x0800,true); chv.setUint16(10,0,true); 
-                chv.setUint16(12,time,true); chv.setUint16(14,date,true);
-                chv.setUint32(16,crc32(content),true); chv.setUint32(20,content.length,true); chv.setUint32(24,content.length,true);
-                chv.setUint16(28,name.length,true); chv.setUint16(30,0,true); chv.setUint16(32,0,true); chv.setUint16(34,0,true); chv.setUint16(36,0,true); chv.setUint32(38,0,true); chv.setUint32(42,off,true); 
-                cd.push(ch, name); off += 30 + name.length + content.length; 
-            }); 
-            const cdOff = off; let cdSz = 0; cd.forEach(p => { parts.push(p); cdSz += p.length; }); 
-            const eocd = new Uint8Array(22); const eocdv = new DataView(eocd.buffer); 
-            eocdv.setUint32(0,0x06054b50,true); eocdv.setUint16(4,0,true); eocdv.setUint16(6,0,true); eocdv.setUint16(8,files.length,true); eocdv.setUint16(10,files.length,true); eocdv.setUint32(12,cdSz,true); eocdv.setUint32(16,cdOff,true); eocdv.setUint16(20,0,true); 
-            parts.push(eocd); return new Blob(parts, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }); 
-        }
-        
-        function crc32(data) { 
-            const table = new Uint32Array(256); 
-            for (let i=0;i<256;i++) { let c=i; for(let j=0;j<8;j++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[i]=c; } 
-            let crc=0xFFFFFFFF; for(let i=0;i<data.length;i++) crc=(crc>>>8)^table[(crc^data[i])&0xFF]; 
-            return (crc^0xFFFFFFFF)>>>0; 
+        function createZip(files) {
+            const enc = new TextEncoder();
+            const parts = [];
+            const cd = [];
+            let off = 0;
+            files.forEach(f => {
+                const content = enc.encode(f.content);
+                const name = enc.encode(f.name);
+                const dt = new Date();
+                const time = ((dt.getHours()<<11)|(dt.getMinutes()<<5)|(dt.getSeconds()>>1));
+                const date = (((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate());
+
+                const lh = new Uint8Array(30);
+                const lhv = new DataView(lh.buffer);
+                lhv.setUint32(0, 0x04034b50, true);
+                lhv.setUint16(4, 20, true);
+                lhv.setUint16(6, 0, true);
+                lhv.setUint16(8, 0, true);
+                lhv.setUint16(10, time, true);
+                lhv.setUint16(12, date, true);
+                lhv.setUint32(14, crc32(content), true);
+                lhv.setUint32(18, content.length, true);
+                lhv.setUint32(22, content.length, true);
+                lhv.setUint16(26, name.length, true);
+
+                parts.push(lh, name, content);
+
+                const ch = new Uint8Array(46);
+                const chv = new DataView(ch.buffer);
+                chv.setUint32(0, 0x02014b50, true);
+                chv.setUint16(4, 20, true);
+                chv.setUint16(6, 20, true);
+                chv.setUint16(8, 0, true);
+                chv.setUint16(10, 0, true);
+                chv.setUint16(12, time, true);
+                chv.setUint16(14, date, true);
+                chv.setUint32(16, crc32(content), true);
+                chv.setUint32(20, content.length, true);
+                chv.setUint32(24, content.length, true);
+                chv.setUint16(28, name.length, true);
+                chv.setUint16(30, 0, true);
+                chv.setUint16(32, 0, true);
+                chv.setUint16(34, 0, true);
+                chv.setUint16(36, 0, true);
+                chv.setUint32(38, 0, true);
+                chv.setUint32(42, off, true);
+
+                cd.push(ch, name);
+                off += 30 + name.length + content.length;
+            });
+
+            const cdOff = off;
+            let cdSz = 0;
+            cd.forEach(p => { parts.push(p); cdSz += p.length; });
+
+            const eocd = new Uint8Array(22);
+            const eocdv = new DataView(eocd.buffer);
+            eocdv.setUint32(0, 0x06054b50, true);
+            eocdv.setUint16(4, 0, true);
+            eocdv.setUint16(6, 0, true);
+            eocdv.setUint16(8, files.length, true);
+            eocdv.setUint16(10, files.length, true);
+            eocdv.setUint32(12, cdSz, true);
+            eocdv.setUint32(16, cdOff, true);
+            eocdv.setUint16(20, 0, true);
+
+            parts.push(eocd);
+            return new Blob(parts, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
         }
 
-        // ========== PWA MANIFEST ==========
+        function crc32(data) {
+            const table = new Uint32Array(256);
+            for (let i = 0; i < 256; i++) { let c = i; for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); table[i] = c; }
+            let crc = 0xFFFFFFFF;
+            for (let i = 0; i < data.length; i++) crc = (crc >>> 8) ^ table[(crc ^ data[i]) & 0xFF];
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        }
+
         const manifestContent = {
-            name: "‎ ",
+            name: "\u200E ",
             short_name: "AS",
             start_url: "AS/",
             display: "standalone",
@@ -858,7 +1026,6 @@
         };
         document.getElementById('app-manifest').href = URL.createObjectURL(new Blob([JSON.stringify(manifestContent)], { type: 'application/json' }));
 
-        // Service Worker
         if ('serviceWorker' in navigator) {
             const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'];
             const sw = `const CN='AttendanceApp_v3',U=${JSON.stringify(urls)};self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match('./')))});`;
