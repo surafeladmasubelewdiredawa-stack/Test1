@@ -1233,13 +1233,49 @@
                 });
                 const totalW = colWidths.reduce((a, b) => a + b, 0);
                 function makeCell(text, isHeader, colIdx) {
-                    const w = colWidths[colIdx] || 500;
-                    const bg = isHeader ? (text === 'TM' || text === '%' ? 'E6B800' : '3C0028') : 'FFFFFF';
-                    const co = isHeader ? (text === 'TM' || text === '%' ? '3C0028' : 'E6B800') : '000000';
-                    const bold = isHeader ? '<w:b/>' : '';
-                    const jc = (colIdx === nameIdx) ? 'left' : 'center';
-                    return `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${bg}"/></w:tcPr><w:p><w:pPr><w:jc w:val="${jc}"/><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr>${bold}<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${co}"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr><w:t xml:space="preserve">${esc(text)}</w:t></w:r></w:p></w:tc>`;
-                }
+    const w = colWidths[colIdx] || 500;
+    const isTM = headers[colIdx] === 'TM';
+    const isPct = headers[colIdx] === '%';
+    const isName = colIdx === nameIdx;
+
+    // Background: TM & % data cells → golden, headers unchanged
+    let bg;
+    if (isHeader) {
+        bg = (isTM || isPct) ? 'E6B800' : '3C0028';
+    } else {
+        bg = (isTM || isPct) ? 'FFF3CD' : 'FFFFFF';
+    }
+
+    // Text color: TM & % data cells → dark on gold, headers unchanged
+    let co;
+    if (isHeader) {
+        co = (isTM || isPct) ? '3C0028' : 'E6B800';
+    } else {
+        co = (isTM || isPct) ? '3C0028' : '000000';
+    }
+
+    const bold = isHeader ? '<w:b/>' : '';
+
+    // Alignment: Full Name header → center, Full Name data → left
+    let jc;
+    if (isName && isHeader) jc = 'center';
+    else if (isName && !isHeader) jc = 'left';
+    else jc = 'center';
+
+    return `<w:tc>` +
+        `<w:tcPr>` +
+            `<w:tcW w:w="${w}" w:type="dxa"/>` +
+            `<w:shd w:val="clear" w:color="auto" w:fill="${bg}"/>` +
+        `</w:tcPr>` +
+        `<w:p>` +
+            `<w:pPr><w:jc w:val="${jc}"/><w:spacing w:before="20" w:after="20"/></w:pPr>` +
+            `<w:r>` +
+                `<w:rPr>${bold}<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${co}"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>` +
+                `<w:t xml:space="preserve">${esc(text)}</w:t>` +
+            `</w:r>` +
+        `</w:p>` +
+    `</w:tc>`;
+}
                 const headerRow = headers.map((h, i) => makeCell(h, true, i)).join('');
                 const dataRows = data.map(row => '<w:tr>' + row.map((c, i) => makeCell(c, false, i)).join('') + '</w:tr>').join('');
                 const gridCols = colWidths.map(w => `<w:gridCol w:w="${w}"/>`).join('\n');
