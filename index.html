@@ -1237,47 +1237,62 @@
     const isTM = headers[colIdx] === 'TM';
     const isPct = headers[colIdx] === '%';
     const isName = colIdx === nameIdx;
-    const isMarkHeader = isHeader && /^M(\d+)$/.test(text);
-    const markNum = isMarkHeader ? text.match(/^M(\d+)$/)[1] : '';
+    const isMarkHeader = isHeader && /^M\d+$/.test(text);
 
-    let bg;
-    if (isHeader) bg = (isTM || isPct) ? 'E6B800' : '3C0028';
-    else bg = (isTM || isPct) ? 'FFF3CD' : 'FFFFFF';
+    let bg, co, bold, jc;
 
-    let co;
-    if (isHeader) co = (isTM || isPct) ? '3C0028' : 'E6B800';
-    else co = (isTM || isPct) ? '3C0028' : '000000';
+    if (isHeader) {
+        bg = (isTM || isPct) ? 'E6B800' : '3C0028';
+        co = (isTM || isPct) ? '3C0028' : 'E6B800';
+        bold = '<w:b/>';
+        jc = 'center';
+    } else {
+        bg = (isTM || isPct) ? 'FFF3CD' : 'FFFFFF';
+        co = (isTM || isPct) ? '3C0028' : '000000';
+        bold = '';
+        jc = isName ? 'left' : 'center';
+    }
 
-    const bold = isHeader ? '<w:b/>' : '';
-
-    let jc;
-    if (isName && isHeader) jc = 'center';
-    else if (isName && !isHeader) jc = 'left';
-    else jc = 'center';
-
-    // M1-M26: ሁለት paragraph — "M1" ከላይ "1" ከታች
+    // M1-M26: M ከላይ (ትንሽ)፣ ቁጥር ከስር (ትልቁ + bold)
     if (isMarkHeader) {
+        const num = text.substring(1);
         return `<w:tc>` +
             `<w:tcPr>` +
                 `<w:tcW w:w="${w}" w:type="dxa"/>` +
                 `<w:shd w:val="clear" w:color="auto" w:fill="${bg}"/>` +
             `</w:tcPr>` +
             `<w:p>` +
-                `<w:pPr><w:jc w:val="center"/><w:spacing w:before="20" w:after="0"/></w:pPr>` +
+                `<w:pPr><w:jc w:val="center"/><w:spacing w:before="30" w:after="0" w:line="200" w:lineRule="auto"/></w:pPr>` +
                 `<w:r>` +
-                    `<w:rPr>${bold}<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${co}"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>` +
-                    `<w:t xml:space="preserve">${esc(text)}</w:t>` +
+                    `<w:rPr><w:sz w:val="11"/><w:szCs w:val="11"/><w:color w:val="${co}"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>` +
+                    `<w:t>M</w:t>` +
                 `</w:r>` +
             `</w:p>` +
             `<w:p>` +
-                `<w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="20"/></w:pPr>` +
+                `<w:pPr><w:jc w:val="center"/><w:spacing w:before="10" w:after="30" w:line="220" w:lineRule="auto"/></w:pPr>` +
                 `<w:r>` +
-                    `<w:rPr><w:b/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="${co}"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>` +
-                    `<w:t xml:space="preserve">${markNum}</w:t>` +
+                    `<w:rPr>${bold}<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${co}"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>` +
+                    `<w:t>${esc(num)}</w:t>` +
                 `</w:r>` +
             `</w:p>` +
         `</w:tc>`;
     }
+
+    // ሌሎች columns (Full Name, G, TM, %, #)
+    return `<w:tc>` +
+        `<w:tcPr>` +
+            `<w:tcW w:w="${w}" w:type="dxa"/>` +
+            `<w:shd w:val="clear" w:color="auto" w:fill="${bg}"/>` +
+        `</w:tcPr>` +
+        `<w:p>` +
+            `<w:pPr><w:jc w:val="${jc}"/><w:spacing w:before="20" w:after="20"/></w:pPr>` +
+            `<w:r>` +
+                `<w:rPr>${bold}<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${co}"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>` +
+                `<w:t xml:space="preserve">${esc(text)}</w:t>` +
+            `</w:r>` +
+        `</w:p>` +
+    `</w:tc>`;
+}
 
     // ሌሎች cells — ነባል
     return `<w:tc>` +
