@@ -376,8 +376,7 @@
             measurementId: "G-LJW36WPZJ4"
         };
 
-        let fb = null;
-        let fbReady = false;
+        let fb = null, fbReady = false;
 
         async function loadFirebase() {
             try {
@@ -390,27 +389,17 @@
                 fb = {
                     ref: fdb.ref, push: fdb.push, onValue: fdb.onValue, remove: fdb.remove,
                     update: fdb.update, get: fdb.get, db, auth,
-                    signIn: fAuth.signInWithEmailAndPassword, signOut: fAuth.signOut, onAuth: fAuth.onAuthStateChanged,
+                    signIn: fAuth.signInWithEmailAndPassword, signOut: fAuth.signOut,
+                    onAuth: fAuth.onAuthStateChanged,
                     recordsRef: fdb.ref(db, 'users'), historyRef: fdb.ref(db, 'history')
                 };
                 fbReady = true;
-                console.log('[FB] Firebase loaded OK');
                 return true;
-            } catch (err) {
-                console.warn('[FB] Firebase load failed:', err.message);
-                fbReady = false;
-                return false;
-            }
+            } catch (err) { fbReady = false; return false; }
         }
 
         function fbRef(path) { return fbReady ? fb.ref(fb.db, path) : null; }
 
-        /* ═══════════════════════════════════════
-           VERSION-BASED REAL-TIME SYNC SYSTEM
-           Firebase ላይ _v field ይጠቀማል
-           Device A ሲቀይር → Device B በድክል ይቀበላል
-           ሁለቱም offline ሲሆኑ → online ሲሆኑ latest wins
-        ═══════════════════════════════════════ */
         let localVersion = parseInt(localStorage.getItem('att_v') || '0');
         function bumpVersion() {
             localVersion = parseInt(localStorage.getItem('att_v') || '0') + 1;
@@ -442,7 +431,8 @@
         const iconStop = '<i class="fa-solid fa-stop"></i>';
         const countdownEl = document.getElementById('countdown-timer');
         const countdownNumber = document.getElementById('countdown-number');
-        let countdownInterval = null, currentAttendanceMark = null, markedThisMark = new Set(), isAttendanceOpen = false;
+        let countdownInterval = null, currentAttendanceMark = null;
+        let markedThisMark = new Set(), isAttendanceOpen = false;
         const listOverlay = document.getElementById('list-overlay');
         const exportContextMenu = document.getElementById('export-context-menu');
         const exportMenuBtn = document.getElementById('export-menu-btn');
@@ -511,25 +501,17 @@
             const marks = [];
             for (let i = 3; i <= 28; i++) {
                 marks.push({
-                    html: row.cells[i].innerHTML,
-                    value: row.cells[i].dataset.value || '',
-                    title: row.cells[i].title || '',
-                    date: row.cells[i].dataset.date || ''
+                    html: row.cells[i].innerHTML, value: row.cells[i].dataset.value || '',
+                    title: row.cells[i].title || '', date: row.cells[i].dataset.date || ''
                 });
             }
             return {
-                name: row.cells[1].textContent,
-                gender: row.cells[2].textContent,
-                church: row.dataset.church || '',
-                christ: row.dataset.christ || '',
-                fullname: row.dataset.fullname || '',
-                phone: row.dataset.phone || '',
-                date: row.dataset.date || '',
-                time: row.dataset.time || '',
-                startMark: row.dataset.startMark || 1,
-                marks,
-                total: row.cells[29].textContent,
-                percent: row.cells[30].textContent
+                name: row.cells[1].textContent, gender: row.cells[2].textContent,
+                church: row.dataset.church || '', christ: row.dataset.christ || '',
+                fullname: row.dataset.fullname || '', phone: row.dataset.phone || '',
+                date: row.dataset.date || '', time: row.dataset.time || '',
+                startMark: row.dataset.startMark || 1, marks,
+                total: row.cells[29].textContent, percent: row.cells[30].textContent
             };
         }
 
@@ -538,8 +520,7 @@
             let c = 1;
             Object.keys(data).forEach(key => {
                 if (key === '_v') return;
-                const s = data[key];
-                if (s === null) return;
+                const s = data[key]; if (s === null) return;
                 const row = document.createElement('tr');
                 let mh = '';
                 (s.marks || []).forEach(m => {
@@ -547,35 +528,25 @@
                 });
                 for (let i = (s.marks||[]).length; i < 26; i++) mh += '<td></td>';
                 row.innerHTML = `<td>${c}</td><td>${s.name}</td><td>${s.gender}</td>${mh}<td>${s.total}</td><td>${s.percent}</td>`;
-                row.dataset.id = key;
-                row.dataset.church = s.church||'';
-                row.dataset.christ = s.christ||'';
-                row.dataset.fullname = s.fullname||'';
-                row.dataset.gender = s.gender||'';
-                row.dataset.phone = s.phone||'';
-                row.dataset.date = s.date||'';
-                row.dataset.time = s.time||'';
+                row.dataset.id = key; row.dataset.church = s.church||'';
+                row.dataset.christ = s.christ||''; row.dataset.fullname = s.fullname||'';
+                row.dataset.gender = s.gender||''; row.dataset.phone = s.phone||'';
+                row.dataset.date = s.date||''; row.dataset.time = s.time||'';
                 row.dataset.startMark = s.startMark||1;
-                tableBody.appendChild(row);
-                c++;
+                tableBody.appendChild(row); c++;
             });
             updateAllTotals();
         }
 
-        function updateAllTotals() {
-            document.querySelectorAll('#student-table-body tr').forEach(r => updateTotals(r));
-        }
-
+        function updateAllTotals() { document.querySelectorAll('#student-table-body tr').forEach(r => updateTotals(r)); }
         function updateTotals(row) {
             let t = 0;
             for (let i = 3; i <= 28; i++) t += parseInt(row.cells[i].dataset.value || '0');
-            row.cells[29].textContent = t;
-            row.cells[29].style.color = '#00ff9d';
+            row.cells[29].textContent = t; row.cells[29].style.color = '#00ff9d';
             const mx = getCurrentMaxAttendanceMark() * 4;
             row.cells[30].textContent = mx > 0 ? ((t / mx) * 100).toFixed(1) : '0';
             row.cells[30].style.color = '#00ff9d';
         }
-
         function getCurrentMaxAttendanceMark() {
             let mx = 0;
             document.querySelectorAll('#student-table-body tr').forEach(r => {
@@ -585,22 +556,17 @@
             });
             return mx;
         }
-
         function checkIfAnyMarksExist() {
             let s = 0;
-            document.querySelectorAll('#student-table-body tr').forEach(r => {
-                s += parseInt(r.cells[29].textContent) || 0;
-            });
+            document.querySelectorAll('#student-table-body tr').forEach(r => { s += parseInt(r.cells[29].textContent) || 0; });
             return s > 0;
         }
-
         function setMarkDisplay(cell, val) {
             const colors = { 4: '#2196F3', 3: '#00ff9d', 2: '#FFEB3B', 1: '#E91E63', 0: '#ff4d4d' };
             cell.innerHTML = `<span style="color:${colors[val]||'#fff'};font-size:1.2rem;font-weight:bold">${val}</span>`;
             cell.dataset.value = val;
             if (val > 0) cell.dataset.date = new Date().toISOString();
         }
-
         function findStudentRow(name) {
             const n = name.toLowerCase().trim();
             for (const r of document.querySelectorAll('#student-table-body tr')) {
@@ -608,18 +574,12 @@
             }
             return null;
         }
-
-        function updateRowNumbers() {
-            document.querySelectorAll('#student-table-body tr').forEach((r, i) => r.cells[0].textContent = i + 1);
-        }
-
+        function updateRowNumbers() { document.querySelectorAll('#student-table-body tr').forEach((r, i) => r.cells[0].textContent = i + 1); }
         function sortTableAndNumbers() {
             const rows = Array.from(tableBody.querySelectorAll('tr'));
             rows.sort((a, b) => a.cells[1].textContent.trim().toLowerCase().localeCompare(b.cells[1].textContent.trim().toLowerCase()));
-            rows.forEach(r => tableBody.appendChild(r));
-            updateRowNumbers();
+            rows.forEach(r => tableBody.appendChild(r)); updateRowNumbers();
         }
-
         function markNextAvailableMark(row) {
             if (!row) return;
             let tm;
@@ -631,25 +591,17 @@
             if (!cell.dataset.value) {
                 const tl = parseInt(countdownNumber.textContent);
                 const sc = tl > 15 ? 4 : tl > 10 ? 3 : tl > 5 ? 2 : 1;
-                setMarkDisplay(cell, sc);
-                cell.title = `Mark ${tm}: Score ${sc}`;
-                cell.classList.add('mark-cell');
-                cell.classList.remove('disabled');
-                showToast(`Mark ${tm}: Score ${sc}`, true);
-                vibrate(300);
-                updateTotals(row);
-                saveData();
+                setMarkDisplay(cell, sc); cell.title = `Mark ${tm}: Score ${sc}`;
+                cell.classList.add('mark-cell'); cell.classList.remove('disabled');
+                showToast(`Mark ${tm}: Score ${sc}`, true); vibrate(300);
+                updateTotals(row); saveData();
             } else showToast(`Already marked M${tm}`, true);
         }
-
         function genKey() {
             if (fbReady) return fb.push(fb.recordsRef).key;
-            const c = new Uint8Array(20);
-            crypto.getRandomValues(c);
-            let r = '';
+            const c = new Uint8Array(20); crypto.getRandomValues(c); let r = '';
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            for (let i = 0; i < 20; i++) r += chars[c[i] % chars.length];
-            return r;
+            for (let i = 0; i < 20; i++) r += chars[c[i] % chars.length]; return r;
         }
 
         function saveCountdownEnd(end) { localStorage.setItem('countdownEndTime', end); }
@@ -657,89 +609,54 @@
         function getRemaining() {
             const e = localStorage.getItem('countdownEndTime');
             if (!e) return 0;
-            const d = Math.floor((parseInt(e) - Date.now()) / 1000);
-            return d > 0 ? d : 0;
+            const d = Math.floor((parseInt(e) - Date.now()) / 1000); return d > 0 ? d : 0;
         }
-
         function startCountdown(resumed) {
             if (countdownInterval || isAttendanceOpen) return;
             isAttendanceOpen = true;
             saveCountdownEnd(Date.now() + ((resumed != null ? resumed : 20) * 1000));
-            let tl = getRemaining();
-            countdownNumber.textContent = tl;
-            countdownEl.classList.add('active');
-            countdownEl.classList.remove('warning');
+            let tl = getRemaining(); countdownNumber.textContent = tl;
+            countdownEl.classList.add('active'); countdownEl.classList.remove('warning');
             countdownInterval = setInterval(() => {
-                tl = getRemaining();
-                countdownNumber.textContent = tl;
+                tl = getRemaining(); countdownNumber.textContent = tl;
                 if (tl <= 5) countdownEl.classList.add('warning');
-                if (tl <= 0) {
-                    stopCountdown();
-                    showToast(`Mark ${currentAttendanceMark} ended`, true);
-                    markAbsentAfterTimeout();
-                    markedThisMark.clear();
-                    saveData();
-                }
+                if (tl <= 0) { stopCountdown(); showToast(`Mark ${currentAttendanceMark} ended`, true); markAbsentAfterTimeout(); markedThisMark.clear(); saveData(); }
             }, 1000);
         }
-
         function stopCountdown() {
             if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
-            isAttendanceOpen = false;
-            clearCountdownEnd();
+            isAttendanceOpen = false; clearCountdownEnd();
             countdownEl.classList.remove('active', 'warning');
         }
-
         countdownEl.addEventListener('dblclick', () => {
-            if (isAttendanceOpen) {
-                stopCountdown();
-                showToast(`Mark ${currentAttendanceMark} stopped`, true);
-                markAbsentAfterTimeout();
-            }
+            if (isAttendanceOpen) { stopCountdown(); showToast(`Mark ${currentAttendanceMark} stopped`, true); markAbsentAfterTimeout(); }
         });
-
         function markAbsentAfterTimeout() {
             if (!currentAttendanceMark) return;
-            const mn = currentAttendanceMark;
-            let any = false;
+            const mn = currentAttendanceMark; let any = false;
             document.querySelectorAll('#student-table-body tr').forEach(r => {
                 if (parseInt(r.dataset.startMark || 1) <= mn) {
                     const c = r.cells[2+mn];
                     if (c && c.innerHTML.trim() === '') {
-                        setMarkDisplay(c, 0);
-                        c.title = `Absent on Mark ${mn}`;
-                        c.classList.add('mark-cell');
-                        c.classList.remove('disabled');
-                        updateTotals(r);
-                        any = true;
+                        setMarkDisplay(c, 0); c.title = `Absent on Mark ${mn}`;
+                        c.classList.add('mark-cell'); c.classList.remove('disabled');
+                        updateTotals(r); any = true;
                     }
                 }
             });
-            if (any) showToast("Missing marked 0", true);
-            saveData();
+            if (any) showToast("Missing marked 0", true); saveData();
         }
-
         function saveAttState() {
             if (isAttendanceOpen && currentAttendanceMark)
-                localStorage.setItem('attendanceState', JSON.stringify({
-                    isOpen: true, currentMark: currentAttendanceMark,
-                    markedSet: Array.from(markedThisMark)
-                }));
+                localStorage.setItem('attendanceState', JSON.stringify({ isOpen: true, currentMark: currentAttendanceMark, markedSet: Array.from(markedThisMark) }));
         }
-
         function loadFromLocalStorage() {
             try {
                 const saved = JSON.parse(localStorage.getItem('attendance_students') || '{}');
-                if (Object.keys(saved).length > 0) populateTable(saved);
-                else tableBody.innerHTML = '';
+                if (Object.keys(saved).length > 0) populateTable(saved); else tableBody.innerHTML = '';
             } catch(e) { tableBody.innerHTML = ''; }
         }
 
-        /* ═══════════════════════════════════════════════
-           FIREBASE REAL-TIME LISTENER
-           ሁሌም Firebase ውሂብ ከ local ከሆን ብቻ ይተካል
-           ይህ Device A ሲቀይር Device B በድክል ይቀበላል ማለት ነው
-        ═══════════════════════════════════════════════ */
         function loadFirebaseData() {
             loadFromLocalStorage();
             if (!fbReady || !navigator.onLine) return;
@@ -747,130 +664,75 @@
             unsubscribeRecords = fb.onValue(fb.recordsRef, (snap) => {
                 const rawData = snap.exists() ? snap.val() : {};
                 const fbV = rawData._v || 0;
-
-                // Firebase version ከ local ከሆን ብቻ ይቀበላል
-                if (fbV < localVersion) {
-                    console.log(`[Sync] Skip: FB v${fbV} < local v${localVersion}`);
-                    return;
-                }
-
-                const data = { ...rawData };
-                delete data._v;
-
+                if (fbV < localVersion) return;
+                const data = { ...rawData }; delete data._v;
                 const clean = {};
-                for (const [k, v] of Object.entries(data)) {
-                    if (v !== null) clean[k] = v;
-                }
-
-                // Local storage ሙሉ በሙሉ ማስተካከል
+                for (const [k, v] of Object.entries(data)) { if (v !== null) clean[k] = v; }
                 populateTable(clean);
                 localStorage.setItem('attendance_students', JSON.stringify(clean));
-                localVersion = fbV;
-                localStorage.setItem('att_v', String(fbV));
+                localVersion = fbV; localStorage.setItem('att_v', String(fbV));
                 localStorage.setItem('attendance_deleted', '[]');
-                console.log(`[Sync] Applied FB v${fbV}, ${Object.keys(clean).length} students`);
             }, (err) => { console.error("Firebase read error:", err); });
         }
 
-        /* ═══════════════════════════════════════════════
-           SAVE DATA — version bump + Firebase push
-           ሁሉም operation (register/scan/mark/delete)
-           ከዚህ ይላል
-        ═══════════════════════════════════════════════ */
         function saveData() {
             const rows = document.querySelectorAll('#student-table-body tr');
             const data = {};
             rows.forEach(r => { const k = r.dataset.id; if (k) data[k] = buildStudentObj(r); });
-
             bumpVersion();
             localStorage.setItem('attendance_students', JSON.stringify(data));
             saveAttState();
-
             if (navigator.onLine && fbReady) {
                 const pushData = { ...data, _v: localVersion };
                 const deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
                 deletedKeys.forEach(k => { pushData[k] = null; });
-
-                fb.update(fb.recordsRef, pushData).then(() => {
-                    localStorage.setItem('attendance_deleted', '[]');
-                }).catch(err => console.error("Firebase save error:", err));
+                fb.update(fb.recordsRef, pushData).then(() => { localStorage.setItem('attendance_deleted', '[]'); }).catch(err => console.error("Firebase save error:", err));
             }
         }
 
-        /* ═══════════════════════════════════════════════
-           SYNC ON RECONNECT
-           Online ሲሆን version compare ያደርጋል:
-           FB v > local v → pull (ሌላ ተቀይሯል)
-           local v > FB v → push (እኔ ተቀይሬኛለሁ)
-        ═══════════════════════════════════════════════ */
         async function syncLocalToCloud() {
             if (!fbReady || !navigator.onLine) return;
             syncBadge.classList.add('active');
             try {
                 const snap = await fb.get(fb.recordsRef);
                 let fbV = 0, fbData = {};
-                if (snap.exists()) {
-                    fbData = snap.val();
-                    fbV = fbData._v || 0;
-                    delete fbData._v;
-                }
-                console.log(`[Sync] Local v${localVersion} vs FB v${fbV}`);
-
+                if (snap.exists()) { fbData = snap.val(); fbV = fbData._v || 0; delete fbData._v; }
                 if (fbV > localVersion) {
-                    // ሌላ device ተቀይሯል → local ሙሉ በሙሉ ይተካል
                     const clean = {};
-                    for (const [k, v] of Object.entries(fbData)) {
-                        if (v !== null) clean[k] = v;
-                    }
+                    for (const [k, v] of Object.entries(fbData)) { if (v !== null) clean[k] = v; }
                     populateTable(clean);
                     localStorage.setItem('attendance_students', JSON.stringify(clean));
-                    localVersion = fbV;
-                    localStorage.setItem('att_v', String(fbV));
+                    localVersion = fbV; localStorage.setItem('att_v', String(fbV));
                     localStorage.setItem('attendance_deleted', '[]');
-                    console.log(`[Sync] Pulled: ${Object.keys(clean).length} students`);
                 } else if (localVersion > fbV) {
-                    // እኔ ተቀይሬኛለሁ → Firebase ላይ push
                     const localData = JSON.parse(localStorage.getItem('attendance_students') || '{}');
                     const pushData = { ...localData, _v: localVersion };
                     const deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
                     deletedKeys.forEach(k => { pushData[k] = null; });
                     await fb.update(fb.recordsRef, pushData);
                     localStorage.setItem('attendance_deleted', '[]');
-                    console.log(`[Sync] Pushed: ${Object.keys(localData).length} students`);
                 }
-
                 syncHistoryToFirebase();
                 await syncPendingHistoryDeletions();
             } catch(e) { console.error("[Sync] Error:", e); }
             syncBadge.classList.remove('active');
         }
 
-        /* ═══════════════════════════════════════════════
-           HISTORY SYNC
-           Firebase ላይ ሲኖር local ሙሉ በሙሉ ይተካል
-           ይህ delete ሲያደርጉም ሁለቱም device ላይ ይጠፋል
-        ═══════════════════════════════════════════════ */
         function syncHistoryToFirebase() {
             if (!fbReady || !navigator.onLine) return;
             const pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
             if (pending.length > 0) {
                 pending.forEach(entry => { fb.push(fb.historyRef, entry); });
                 localStorage.setItem('attendance_pending_history', '[]');
-                console.log(`[Sync] Pushed ${pending.length} history entries`);
             }
         }
-
         function loadHistoryFromLocalStorage() {
             try {
                 const arr = JSON.parse(localStorage.getItem('attendance_history') || '[]');
-                if (arr.length > 0) {
-                    const data = {};
-                    arr.forEach(h => { data[h.firebaseKey] = h; });
-                    renderHistory(data);
-                } else renderHistory({});
+                if (arr.length > 0) { const data = {}; arr.forEach(h => { data[h.firebaseKey] = h; }); renderHistory(data); }
+                else renderHistory({});
             } catch(e) { renderHistory({}); }
         }
-
         function loadHistoryFromFirebase() {
             loadHistoryFromLocalStorage();
             if (!fbReady || !navigator.onLine) return;
@@ -879,127 +741,66 @@
                 const data = snap.exists() ? snap.val() : {};
                 renderHistory(data);
                 const arr = [];
-                for (const [k, v] of Object.entries(data)) {
-                    if (v !== null) arr.push({ firebaseKey: k, ...v });
-                }
+                for (const [k, v] of Object.entries(data)) { if (v !== null) arr.push({ firebaseKey: k, ...v }); }
                 localStorage.setItem('attendance_history', JSON.stringify(arr));
                 syncHistoryToFirebase();
             }, (err) => { console.error("Firebase history error:", err); });
         }
-
-        /* ═══════════════════════════════════════════════
-           OFFLINE HISTORY DELETION QUEUING
-           Offline ሲሆን delete ሲያደርግ queue ውስጥ ይገባል
-           Online ሲሆን Firebase ላይ ይሰራል
-        ═══════════════════════════════════════════════ */
         function queueHistoryDeletion(id) {
             let pending = JSON.parse(localStorage.getItem('att_pending_hist_del') || '[]');
             if (!pending.includes(id)) pending.push(id);
             localStorage.setItem('att_pending_hist_del', JSON.stringify(pending));
         }
-
         async function syncPendingHistoryDeletions() {
             if (!fbReady || !navigator.onLine) return;
             const pending = JSON.parse(localStorage.getItem('att_pending_hist_del') || '[]');
             if (!pending.length) return;
             let synced = 0;
-            for (const id of pending) {
-                try { await fb.remove(fbRef(`history/${id}`)); synced++; }
-                catch(e) { console.error(`[Sync] History del failed: ${id}`, e); }
-            }
-            if (synced > 0) {
-                localStorage.setItem('att_pending_hist_del', '[]');
-                console.log(`[Sync] Deleted ${synced} history entries from Firebase`);
-            }
+            for (const id of pending) { try { await fb.remove(fbRef(`history/${id}`)); synced++; } catch(e) {} }
+            if (synced > 0) localStorage.setItem('att_pending_hist_del', '[]');
         }
-
         function renderHistory(data) {
             historyListContainer.innerHTML = '';
-            const entries = Object.entries(data)
-                .filter(([k, v]) => v !== null)
-                .sort((a, b) => new Date(b[1].date) - new Date(a[1].date));
-            if (!entries.length) {
-                historyListContainer.innerHTML = '<div style="text-align:center;color:#aaa;margin-top:50px;grid-column:1/-1">No history found.</div>';
-                return;
-            }
+            const entries = Object.entries(data).filter(([k, v]) => v !== null).sort((a, b) => new Date(b[1].date) - new Date(a[1].date));
+            if (!entries.length) { historyListContainer.innerHTML = '<div style="text-align:center;color:#aaa;margin-top:50px;grid-column:1/-1">No history found.</div>'; return; }
             entries.forEach(([key, item]) => {
-                const d = document.createElement('div');
-                d.className = 'history-item';
+                const d = document.createElement('div'); d.className = 'history-item';
                 d.innerHTML = `<div class="history-item-info"><span class="history-item-title">${item.title}</span><span class="history-item-date">${new Date(item.date).toLocaleString()}</span><span class="history-item-count">${item.count} Students</span></div><div class="history-item-actions"><button class="history-action-btn h-view" data-key="${key}"><i class="fa-solid fa-eye"></i> View</button><button class="history-action-btn h-download" data-key="${key}"><i class="fa-solid fa-download"></i></button><button class="history-action-btn h-delete" data-key="${key}"><i class="fa-solid fa-trash"></i></button></div>`;
                 d.querySelector('.h-view').addEventListener('click', e => { e.stopPropagation(); viewHistory(key, item); });
-                d.querySelector('.h-delete').addEventListener('click', e => {
-                    e.stopPropagation();
-                    pendingDeleteHistoryId = key;
-                    historyDeleteInput.value = '';
-                    historyDeleteError.style.display = 'none';
-                    historyDeleteModal.style.display = 'flex';
-                    historyDeleteInput.focus();
-                });
-                d.querySelector('.h-download').addEventListener('click', e => {
-                    e.stopPropagation();
-                    currentHistoryExportId = key;
-                    currentExportType = 'docx';
-                    docPageTitleInput.value = item.title;
-                    docFileTitleInput.value = item.title.replace(/[^a-z0-9]/gi, '_');
-                    docPercentFilterInput.value = '0';
-                    document.getElementById('title-popup-header').textContent = "Export " + item.title;
-                    document.getElementById('main-export-inputs').style.display = 'none';
-                    titlePopupModal.classList.add('active');
-                    docPercentFilterInput.focus();
-                });
+                d.querySelector('.h-delete').addEventListener('click', e => { e.stopPropagation(); pendingDeleteHistoryId = key; historyDeleteInput.value = ''; historyDeleteError.style.display = 'none'; historyDeleteModal.style.display = 'flex'; historyDeleteInput.focus(); });
+                d.querySelector('.h-download').addEventListener('click', e => { e.stopPropagation(); currentHistoryExportId = key; currentExportType = 'docx'; docPageTitleInput.value = item.title; docFileTitleInput.value = item.title.replace(/[^a-z0-9]/gi, '_'); docPercentFilterInput.value = '0'; document.getElementById('title-popup-header').textContent = "Export " + item.title; document.getElementById('main-export-inputs').style.display = 'none'; titlePopupModal.classList.add('active'); docPercentFilterInput.focus(); });
                 historyListContainer.appendChild(d);
             });
         }
-
         function viewHistory(key, item) {
             historyViewTitle.textContent = item.title;
             let h = '<table style="width:max-content;min-width:100%"><thead><tr><th>#</th><th>Full Name</th><th>Gender</th>';
             for (let i = 1; i <= 26; i++) h += `<th>M${i}</th>`;
             h += '<th>TM</th><th>%</th></tr></thead><tbody>';
-            item.data.forEach((s, i) => {
-                h += `<tr><td>${i+1}</td><td style="text-align:left;padding-left:10px">${s.name}</td><td>${s.gender}</td>${s.marks.map(m=>`<td>${m}</td>`).join('')}<td style="color:#00ff9d;font-weight:bold">${s.total}</td><td style="color:#00ff9d;font-weight:bold">${String(s.percent).replace('%','')}</td></tr>`;
-            });
-            h += '</tbody></table>';
-            historyTableContainer.innerHTML = h;
-            historyViewModal.classList.add('active');
+            item.data.forEach((s, i) => { h += `<tr><td>${i+1}</td><td style="text-align:left;padding-left:10px">${s.name}</td><td>${s.gender}</td>${s.marks.map(m=>`<td>${m}</td>`).join('')}<td style="color:#00ff9d;font-weight:bold">${s.total}</td><td style="color:#00ff9d;font-weight:bold">${String(s.percent).replace('%','')}</td></tr>`; });
+            h += '</tbody></table>'; historyTableContainer.innerHTML = h; historyViewModal.classList.add('active');
         }
 
-        /* ═══════════════════════════════════════════════
-           HISTORY DELETE — online/offline ሁለቱንም
-           Online → ቀጥታ Firebase delete (onValue syncs others)
-           Offline → local delete + queue for later
-        ═══════════════════════════════════════════════ */
         historyDeleteBtn.addEventListener('click', async () => {
             vibrate(30);
             if (historyDeleteInput.value === 'Debebe!') {
                 historyDeleteModal.style.display = 'none';
                 if (pendingDeleteHistoryId) {
                     if (navigator.onLine && fbReady) {
-                        try {
-                            await fb.remove(fbRef(`history/${pendingDeleteHistoryId}`));
-                            showToast("History deleted");
-                        } catch(e) { showToast("Error deleting"); }
+                        try { await fb.remove(fbRef(`history/${pendingDeleteHistoryId}`)); showToast("History deleted"); } catch(e) { showToast("Error deleting"); }
                     } else {
                         let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
                         hist = hist.filter(h => h.firebaseKey !== pendingDeleteHistoryId);
                         localStorage.setItem('attendance_history', JSON.stringify(hist));
                         queueHistoryDeletion(pendingDeleteHistoryId);
-                        renderHistory({});
-                        loadHistoryFromLocalStorage();
-                        showToast("Queued for sync");
+                        renderHistory({}); loadHistoryFromLocalStorage(); showToast("Queued for sync");
                     }
                     pendingDeleteHistoryId = null;
                 }
-            } else {
-                historyDeleteError.style.display = 'block';
-                historyDeleteInput.value = '';
-                historyDeleteInput.focus();
-            }
+            } else { historyDeleteError.style.display = 'block'; historyDeleteInput.value = ''; historyDeleteInput.focus(); }
         });
         historyDeleteInput.addEventListener('keyup', e => { if (e.key === 'Enter') historyDeleteBtn.click(); });
-        historyDeleteModal.addEventListener('click', e => {
-            if (e.target === historyDeleteModal) historyDeleteModal.style.display = 'none';
-        });
+        historyDeleteModal.addEventListener('click', e => { if (e.target === historyDeleteModal) historyDeleteModal.style.display = 'none'; });
 
         moveHistoryBtn.addEventListener('click', () => {
             vibrate(30);
@@ -1009,130 +810,62 @@
             confirmStudentName.textContent = "Data will be reset.";
             afterConfirmAction = () => {
                 document.getElementById('confirm-title-text').innerHTML = "Are you sure?<br><span class='confirm-name' id='confirm-student-name'></span>";
-                archiveTitleInput.value = "";
-                archiveTitleModal.classList.add('active');
-                archiveTitleInput.focus();
+                archiveTitleInput.value = ""; archiveTitleModal.classList.add('active'); archiveTitleInput.focus();
             };
             confirmModal.classList.add('active');
         });
-        archiveSaveBtn.addEventListener('click', () => {
-            vibrate(30);
-            if (!archiveTitleInput.value.trim()) { showToast("Enter text"); return; }
-            archiveTitleModal.classList.remove('active');
-            doMoveToHistory(archiveTitleInput.value.trim());
-        });
+        archiveSaveBtn.addEventListener('click', () => { vibrate(30); if (!archiveTitleInput.value.trim()) { showToast("Enter text"); return; } archiveTitleModal.classList.remove('active'); doMoveToHistory(archiveTitleInput.value.trim()); });
         archiveCancelBtn.addEventListener('click', () => archiveTitleModal.classList.remove('active'));
 
         async function doMoveToHistory(title) {
             showToast("Archiving...");
             const arr = [];
             tableBody.querySelectorAll('tr').forEach(r => {
-                const s = {
-                    name: r.cells[1].textContent, gender: r.cells[2].textContent,
-                    marks: [], total: r.cells[29].textContent, percent: r.cells[30].textContent,
-                    church: r.dataset.church, christ: r.dataset.christ, phone: r.dataset.phone
-                };
+                const s = { name: r.cells[1].textContent, gender: r.cells[2].textContent, marks: [], total: r.cells[29].textContent, percent: r.cells[30].textContent, church: r.dataset.church, christ: r.dataset.christ, phone: r.dataset.phone };
                 for (let i = 1; i <= 26; i++) s.marks.push(r.cells[2+i].textContent.trim());
                 arr.push(s);
             });
-            const entry = {
-                id: Date.now(), title, date: new Date().toISOString(),
-                count: arr.length, data: arr
-            };
-
+            const entry = { id: Date.now(), title, date: new Date().toISOString(), count: arr.length, data: arr };
             let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
             hist.push({ firebaseKey: 'local_' + entry.id, ...entry });
             localStorage.setItem('attendance_history', JSON.stringify(hist));
-
             if (navigator.onLine && fbReady) {
-                try {
-                    await fb.push(fb.historyRef, entry);
-                    showToast("Moved to History!");
-                } catch(e) {
-                    let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
-                    pending.push(entry);
-                    localStorage.setItem('attendance_pending_history', JSON.stringify(pending));
-                    showToast("Queued for sync", true);
-                }
+                try { await fb.push(fb.historyRef, entry); showToast("Moved to History!"); }
+                catch(e) { let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]'); pending.push(entry); localStorage.setItem('attendance_pending_history', JSON.stringify(pending)); showToast("Queued for sync", true); }
             } else {
-                let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
-                pending.push(entry);
-                localStorage.setItem('attendance_pending_history', JSON.stringify(pending));
-                showToast("Queued for sync", true);
+                let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]'); pending.push(entry); localStorage.setItem('attendance_pending_history', JSON.stringify(pending)); showToast("Queued for sync", true);
             }
-
             tableBody.querySelectorAll('tr').forEach(r => {
-                for (let i = 3; i <= 28; i++) {
-                    r.cells[i].innerHTML = '';
-                    r.cells[i].classList.remove('mark-cell', 'disabled');
-                    r.cells[i].dataset.value = '';
-                    r.cells[i].title = '';
-                    r.cells[i].dataset.date = '';
-                }
-                r.cells[29].textContent = '0';
-                r.cells[30].textContent = '0';
-                r.dataset.startMark = "1";
+                for (let i = 3; i <= 28; i++) { r.cells[i].innerHTML = ''; r.cells[i].classList.remove('mark-cell', 'disabled'); r.cells[i].dataset.value = ''; r.cells[i].title = ''; r.cells[i].dataset.date = ''; }
+                r.cells[29].textContent = '0'; r.cells[30].textContent = '0'; r.dataset.startMark = "1";
             });
-            currentAttendanceMark = null;
-            markedThisMark.clear();
-            isAttendanceOpen = false;
-            stopCountdown();
-            saveData();
+            currentAttendanceMark = null; markedThisMark.clear(); isAttendanceOpen = false; stopCountdown(); saveData();
         }
 
-        function showConfirm(row, name) {
-            pendingDeleteRow = row;
-            document.getElementById('confirm-title-text').innerHTML = "Delete this student?<br>";
-            confirmStudentName.textContent = name;
-            confirmModal.classList.add('active');
-        }
-        function hideConfirm() {
-            confirmModal.classList.remove('active');
-            pendingDeleteRow = null;
-            afterConfirmAction = null;
-        }
+        function showConfirm(row, name) { pendingDeleteRow = row; document.getElementById('confirm-title-text').innerHTML = "Delete this student?<br>"; confirmStudentName.textContent = name; confirmModal.classList.add('active'); }
+        function hideConfirm() { confirmModal.classList.remove('active'); pendingDeleteRow = null; afterConfirmAction = null; }
         confirmYesBtn.onclick = () => { if (afterConfirmAction) afterConfirmAction(); hideConfirm(); };
         confirmNoBtn.onclick = hideConfirm;
 
-        /* ═══════════════════════════════════════════════
-           STUDENT DELETE
-           saveData() ይህን { [key]: null } ወደ Firebase ያስገባል
-           Device B onValue ይቀበላል → local + UI ይጠፋል
-        ═══════════════════════════════════════════════ */
         document.getElementById('popup-delete-btn').addEventListener('click', () => {
             if (!selectedDetailRow) return;
             const name = selectedDetailRow.cells[1].textContent.trim();
-            detailPopup.classList.remove('active');
-            showConfirm(selectedDetailRow, name);
+            detailPopup.classList.remove('active'); showConfirm(selectedDetailRow, name);
             afterConfirmAction = () => {
                 const deletedKey = selectedDetailRow.dataset.id;
-                selectedDetailRow.remove();
-                sortTableAndNumbers();
-
+                selectedDetailRow.remove(); sortTableAndNumbers();
                 let deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
                 if (deletedKey && !deletedKeys.includes(deletedKey)) deletedKeys.push(deletedKey);
                 localStorage.setItem('attendance_deleted', JSON.stringify(deletedKeys));
-
-                // ይህ version bump + Firebase push ({key: null}) ያደርጋል
-                saveData();
-                showToast("Student deleted");
-                selectedDetailRow = null;
+                saveData(); showToast("Student deleted"); selectedDetailRow = null;
             };
         });
         detailPopup.querySelector('.popup-close').addEventListener('click', () => detailPopup.classList.remove('active'));
 
-        genderBtns.forEach(b => b.addEventListener('click', function () {
-            genderBtns.forEach(x => x.classList.remove('selected'));
-            this.classList.add('selected');
-            genderInput.value = this.dataset.value;
-        }));
+        genderBtns.forEach(b => b.addEventListener('click', function () { genderBtns.forEach(x => x.classList.remove('selected')); this.classList.add('selected'); genderInput.value = this.dataset.value; }));
 
-        /* ═══════════════════════════════════════════════
-           REGISTER — saveData() በኩል Firebase sync ይሆናል
-        ═══════════════════════════════════════════════ */
         studentForm.addEventListener('submit', e => {
-            e.preventDefault();
-            vibrate(300);
+            e.preventDefault(); vibrate(300);
             const church = document.getElementById('church-name').value.trim();
             const christ = document.getElementById('christ-name').value.trim();
             const first = document.getElementById('first-name').value.trim();
@@ -1141,91 +874,78 @@
             const phone = document.getElementById('phone').value.trim();
             if (!first || !last || !gender) { showToast("Fill required fields!"); return; }
             if (findStudentRow(`${first} ${last}`)) { showToast("Already registered!"); return; }
-            const now = new Date();
-            const sm = getCurrentMaxAttendanceMark() + 1;
-            const row = document.createElement('tr');
-            let mh = '';
+            const now = new Date(), sm = getCurrentMaxAttendanceMark() + 1;
+            const row = document.createElement('tr'); let mh = '';
             for (let i = 1; i <= 26; i++) mh += '<td></td>';
             row.innerHTML = `<td></td><td>${first} ${last}</td><td>${gender.charAt(0)}</td>${mh}<td>0</td><td>0</td>`;
-            row.dataset.church = church;
-            row.dataset.christ = christ;
-            row.dataset.fullname = `${first} ${last}`;
-            row.dataset.gender = gender;
-            row.dataset.phone = phone;
+            row.dataset.church = church; row.dataset.christ = christ;
+            row.dataset.fullname = `${first} ${last}`; row.dataset.gender = gender; row.dataset.phone = phone;
             row.dataset.date = now.toLocaleDateString('en-GB');
             row.dataset.time = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-            row.dataset.startMark = sm;
-            row.dataset.id = genKey();
+            row.dataset.startMark = sm; row.dataset.id = genKey();
             for (let m = 1; m < sm; m++) {
-                const c = row.cells[2+m];
-                setMarkDisplay(c, 0);
-                c.title = `Absent Mark ${m} (Late)`;
-                c.classList.add('mark-cell', 'disabled');
+                const c = row.cells[2+m]; setMarkDisplay(c, 0);
+                c.title = `Absent Mark ${m} (Late)`; c.classList.add('mark-cell', 'disabled');
             }
-            tableBody.appendChild(row);
-            sortTableAndNumbers();
-            updateTotals(row);
-            saveData();
-            formModal.classList.remove('active');
+            tableBody.appendChild(row); sortTableAndNumbers(); updateTotals(row); saveData();
+            closeFormModal();
             showToast(`Registered (Start M${sm})`);
+        });
+
+        /* ═══════════════════════════════════
+           FORM MODAL OPEN / CLOSE — FIXED
+        ═══════════════════════════════════ */
+        function openFormModal() {
+            formModal.classList.add('active');
             studentForm.reset();
             genderBtns.forEach(b => b.classList.remove('selected'));
             genderInput.value = "";
+        }
+
+        function closeFormModal() {
+            formModal.classList.remove('active');
+            studentForm.reset();
+            genderBtns.forEach(b => b.classList.remove('selected'));
+            genderInput.value = "";
+        }
+
+        // Cancel button — e.preventDefault + e.stopPropagation ይሰራል
+        document.getElementById('cancel-register').addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeFormModal();
+        });
+
+        // Form modal background click — ውጭ ሲጫፍ ሲጫን ይዘጋል
+        formModal.addEventListener('click', function(e) {
+            if (e.target === formModal) closeFormModal();
         });
 
         document.getElementById('list-btn').addEventListener('click', function () {
             vibrate(30); listOverlay.classList.add('active');
             history.pushState({ page: 'list' }, '');
-            animateButton(this);
-            regContextMenu.classList.remove('active');
+            animateButton(this); regContextMenu.classList.remove('active');
             exportContextMenu.classList.remove('active');
         });
-        settingBtn.addEventListener('click', function (e) {
-            e.stopPropagation(); vibrate(30);
-            settingsPanel.classList.toggle('active');
-        });
+        settingBtn.addEventListener('click', function (e) { e.stopPropagation(); vibrate(30); settingsPanel.classList.toggle('active'); });
         settingsCloseBtn.addEventListener('click', () => settingsPanel.classList.remove('active'));
-        optHistory.addEventListener('click', () => {
-            vibrate(30); settingsPanel.classList.remove('active');
-            historyModal.classList.add('active');
-            history.pushState({ page: 'history' }, '');
-        });
+        optHistory.addEventListener('click', () => { vibrate(30); settingsPanel.classList.remove('active'); historyModal.classList.add('active'); history.pushState({ page: 'history' }, ''); });
         historyCloseBtn.addEventListener('click', () => historyModal.classList.remove('active'));
         historyViewCloseBtn.addEventListener('click', () => historyViewModal.classList.remove('active'));
-        document.getElementById('close-list').addEventListener('click', () => {
-            vibrate(30); listOverlay.classList.remove('active');
-        });
+        document.getElementById('close-list').addEventListener('click', () => { vibrate(30); listOverlay.classList.remove('active'); });
         exportMenuBtn.addEventListener('click', function (e) {
             e.stopPropagation(); e.preventDefault(); vibrate(30); animateButton(this);
-            exportContextMenu.style.top = '80px';
-            exportContextMenu.style.right = '75px';
-            exportContextMenu.style.left = 'auto';
-            exportContextMenu.classList.toggle('active');
-            regContextMenu.classList.remove('active');
+            exportContextMenu.style.top = '80px'; exportContextMenu.style.right = '75px'; exportContextMenu.style.left = 'auto';
+            exportContextMenu.classList.toggle('active'); regContextMenu.classList.remove('active');
         });
         regMenuBtn.addEventListener('click', function (e) {
             e.stopPropagation(); e.preventDefault(); vibrate(30); animateButton(this);
-            regContextMenu.style.top = '80px';
-            regContextMenu.style.right = '20px';
-            regContextMenu.style.left = 'auto';
-            regContextMenu.classList.toggle('active');
-            exportContextMenu.classList.remove('active');
+            regContextMenu.style.top = '80px'; regContextMenu.style.right = '20px'; regContextMenu.style.left = 'auto';
+            regContextMenu.classList.toggle('active'); exportContextMenu.classList.remove('active');
         });
-        document.getElementById('opt-manual').addEventListener('click', () => {
-            vibrate(30); regContextMenu.classList.remove('active');
-            formModal.classList.add('active');
-            studentForm.reset();
-            genderBtns.forEach(b => b.classList.remove('selected'));
-            genderInput.value = "";
-        });
-        document.getElementById('opt-qr-file').addEventListener('click', () => {
-            vibrate(30); regContextMenu.classList.remove('active');
-            isAttendanceScan = false; qrHiddenInput.click();
-        });
-        document.getElementById('opt-qr-camera').addEventListener('click', () => {
-            vibrate(30); regContextMenu.classList.remove('active');
-            isAttendanceScan = false; openRegCam();
-        });
+        document.getElementById('opt-manual').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); openFormModal(); });
+        document.getElementById('opt-qr-file').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); isAttendanceScan = false; qrHiddenInput.click(); });
+        document.getElementById('opt-qr-camera').addEventListener('click', () => { vibrate(30); regContextMenu.classList.remove('active'); isAttendanceScan = false; openRegCam(); });
         document.addEventListener('click', e => {
             if (exportContextMenu.classList.contains('active') && !exportContextMenu.contains(e.target) && e.target !== exportMenuBtn && !exportMenuBtn.contains(e.target)) exportContextMenu.classList.remove('active');
             if (regContextMenu.classList.contains('active') && !regContextMenu.contains(e.target) && e.target !== regMenuBtn && !regMenuBtn.contains(e.target)) regContextMenu.classList.remove('active');
@@ -1235,8 +955,7 @@
         tableBody.addEventListener('dblclick', function (e) {
             const td = e.target.closest('td');
             if (td && td.cellIndex === 1) {
-                const r = td.closest('tr');
-                selectedDetailRow = r;
+                const r = td.closest('tr'); selectedDetailRow = r;
                 document.getElementById('detail-church').textContent = r.dataset.church || "--";
                 document.getElementById('detail-christ').textContent = r.dataset.christ || "--";
                 document.getElementById('detail-fullname').textContent = r.dataset.fullname || "--";
@@ -1244,8 +963,7 @@
                 document.getElementById('detail-phone').textContent = r.dataset.phone || "--";
                 document.getElementById('detail-date').textContent = r.dataset.date || "--";
                 document.getElementById('detail-time').textContent = r.dataset.time || "--";
-                detailPopup.classList.add('active');
-                return;
+                detailPopup.classList.add('active'); return;
             }
             if (td && td.cellIndex >= 3 && td.cellIndex <= 28) {
                 const v = td.dataset.value, r = td.closest('tr');
@@ -1254,10 +972,8 @@
                 if (v === '0') {
                     const gm = getCurrentMaxAttendanceMark(), am = currentAttendanceMark || gm;
                     if (cm === am || isAttendanceOpen) {
-                        setMarkDisplay(td, 2);
-                        td.querySelector('span').style.color = '#fff';
-                        td.title = `Permission Mark ${cm}`;
-                        updateTotals(r); saveData();
+                        setMarkDisplay(td, 2); td.querySelector('span').style.color = '#fff';
+                        td.title = `Permission Mark ${cm}`; updateTotals(r); saveData();
                         showToast("Changed to Permission");
                     } else showToast("Can only change latest mark");
                 }
@@ -1271,10 +987,7 @@
                     const dates = {};
                     document.querySelectorAll('#student-table-body tr').forEach(r => {
                         const c = r.cells[2+mn];
-                        if (c && c.dataset.date) {
-                            const d = new Date(c.dataset.date).toLocaleDateString();
-                            dates[d] = (dates[d] || 0) + 1;
-                        }
+                        if (c && c.dataset.date) { const d = new Date(c.dataset.date).toLocaleDateString(); dates[d] = (dates[d] || 0) + 1; }
                     });
                     const ent = Object.entries(dates);
                     datePopup.innerHTML = ent.length === 0 ? "No data M" + mn : `<strong>M${mn} Dates:</strong><br>` + ent.map(([d, c]) => `${d} (${c})`).join('<br>');
@@ -1288,32 +1001,18 @@
         });
         document.querySelector('.table-container').addEventListener('scroll', () => datePopup.style.display = 'none');
 
-        toggleScanBtn.addEventListener('click', function () {
-            vibrate(30); animateButton(this);
-            if (cameraModal.classList.contains('active')) closeCam();
-            else { isAttendanceScan = true; openCam(); }
-        });
-        fileBtn.addEventListener('click', function () {
-            vibrate(30); animateButton(this);
-            isAttendanceScan = true; qrHiddenInput.click();
-        });
+        toggleScanBtn.addEventListener('click', function () { vibrate(30); animateButton(this); if (cameraModal.classList.contains('active')) closeCam(); else { isAttendanceScan = true; openCam(); } });
+        fileBtn.addEventListener('click', function () { vibrate(30); animateButton(this); isAttendanceScan = true; qrHiddenInput.click(); });
         async function openCam() {
-            cameraModal.classList.add('active');
-            toggleScanBtn.classList.add('camera-running');
-            toggleScanBtn.innerHTML = iconStop;
-            toggleScanBtn.title = "Stop Camera";
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                cameraFeed.srcObject = videoStream;
-                scanCam();
-            } catch(e) { showToast("Camera error"); closeCam(); }
+            cameraModal.classList.add('active'); toggleScanBtn.classList.add('camera-running');
+            toggleScanBtn.innerHTML = iconStop; toggleScanBtn.title = "Stop Camera";
+            try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); cameraFeed.srcObject = videoStream; scanCam(); }
+            catch(e) { showToast("Camera error"); closeCam(); }
         }
         function closeCam() {
             if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-            cameraModal.classList.remove('active');
-            toggleScanBtn.classList.remove('camera-running');
-            toggleScanBtn.innerHTML = iconExpand;
-            toggleScanBtn.title = "Open Camera";
+            cameraModal.classList.remove('active'); toggleScanBtn.classList.remove('camera-running');
+            toggleScanBtn.innerHTML = iconExpand; toggleScanBtn.title = "Open Camera";
         }
         let camInterval = null;
         function scanCam() {
@@ -1322,8 +1021,7 @@
             camInterval = setInterval(() => {
                 if (!cameraModal.classList.contains('active') || !videoStream) { clearInterval(camInterval); return; }
                 if (cameraFeed.readyState === cameraFeed.HAVE_ENOUGH_DATA) {
-                    cameraCanvas.height = cameraFeed.videoHeight;
-                    cameraCanvas.width = cameraFeed.videoWidth;
+                    cameraCanvas.height = cameraFeed.videoHeight; cameraCanvas.width = cameraFeed.videoWidth;
                     ctx.drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height);
                     const img = ctx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height);
                     const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
@@ -1333,11 +1031,8 @@
         }
         async function openRegCam() {
             regCameraModal.classList.add('active');
-            try {
-                regVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                regCameraFeed.srcObject = regVideoStream;
-                scanRegCam();
-            } catch(e) { showToast("Camera error"); closeRegCam(); }
+            try { regVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); regCameraFeed.srcObject = regVideoStream; scanRegCam(); }
+            catch(e) { showToast("Camera error"); closeRegCam(); }
         }
         function closeRegCam() {
             if (regVideoStream) { regVideoStream.getTracks().forEach(t => t.stop()); regVideoStream = null; }
@@ -1351,8 +1046,7 @@
             regCamInterval = setInterval(() => {
                 if (!regCameraModal.classList.contains('active') || !regVideoStream) { clearInterval(regCamInterval); return; }
                 if (regCameraFeed.readyState === regCameraFeed.HAVE_ENOUGH_DATA) {
-                    regCameraCanvas.height = regCameraFeed.videoHeight;
-                    regCameraCanvas.width = regCameraFeed.videoWidth;
+                    regCameraCanvas.height = regCameraFeed.videoHeight; regCameraCanvas.width = regCameraFeed.videoWidth;
                     ctx.drawImage(regCameraFeed, 0, 0, regCameraCanvas.width, regCameraCanvas.height);
                     const img = ctx.getImageData(0, 0, regCameraCanvas.width, regCameraCanvas.height);
                     const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
@@ -1362,39 +1056,17 @@
         }
 
         qrHiddenInput.onchange = async e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            showToast("Processing...", true);
-            const url = URL.createObjectURL(file);
-            processImage.src = url;
+            const file = e.target.files[0]; if (!file) return;
+            showToast("Processing...", true); const url = URL.createObjectURL(file); processImage.src = url;
             processImage.onload = async () => {
                 try {
                     let text = null;
-                    if ('BarcodeDetector' in window) {
-                        try {
-                            const det = new BarcodeDetector({formats: ['qr_code']});
-                            const bc = await det.detect(processImage);
-                            if (bc.length) text = bc[0].rawValue.trim();
-                        } catch(ex) {}
-                    }
-                    if (!text) {
-                        const cv = document.createElement('canvas'), cx = cv.getContext('2d');
-                        cv.width = processImage.naturalWidth;
-                        cv.height = processImage.naturalHeight;
-                        cx.drawImage(processImage, 0, 0);
-                        const img = cx.getImageData(0, 0, cv.width, cv.height);
-                        const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
-                        if (code && code.data) text = code.data.trim();
-                    }
-                    URL.revokeObjectURL(url);
-                    qrHiddenInput.value = "";
+                    if ('BarcodeDetector' in window) { try { const det = new BarcodeDetector({formats: ['qr_code']}); const bc = await det.detect(processImage); if (bc.length) text = bc[0].rawValue.trim(); } catch(ex) {} }
+                    if (!text) { const cv = document.createElement('canvas'), cx = cv.getContext('2d'); cv.width = processImage.naturalWidth; cv.height = processImage.naturalHeight; cx.drawImage(processImage, 0, 0); const img = cx.getImageData(0, 0, cv.width, cv.height); const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" }); if (code && code.data) text = code.data.trim(); }
+                    URL.revokeObjectURL(url); qrHiddenInput.value = "";
                     if (!text) { showToast("No QR found"); return; }
                     handleQR(text);
-                } catch(err) {
-                    showToast("Error");
-                    URL.revokeObjectURL(url);
-                    qrHiddenInput.value = "";
-                }
+                } catch(err) { showToast("Error"); URL.revokeObjectURL(url); qrHiddenInput.value = ""; }
             };
         };
 
@@ -1402,45 +1074,23 @@
             const d = { church: '', christ: '', first: '', last: '', gender: '', phone: '', fullName: '' };
             const parts = text.split(/[\n|]/).map(p => p.trim()).filter(p => p);
             for (const p of parts) {
-                const l = p.toLowerCase();
-                const val = p.split(/[:=]/).slice(1).join(':').trim() || '';
+                const l = p.toLowerCase(); const val = p.split(/[:=]/).slice(1).join(':').trim() || '';
                 if (l.includes('church')) d.church = val || p;
                 else if (l.includes('christ') || l.includes('middle')) d.christ = val || p;
                 else if (l.includes('first')) d.first = val || p;
                 else if (l.includes('last') || l.includes('surname')) d.last = val || p;
                 else if (l.includes('gender')) d.gender = val || p;
                 else if (l.includes('phone') || l.includes('tel') || /^\+?\d{9,}$/.test(p)) d.phone = val || p;
-                else if (l.includes('full name') || l.includes('fullname') || (l.includes('name') && !l.includes('first') && !l.includes('last') && !l.includes('christ') && !l.includes('church'))) {
-                    d.fullName = val || p;
-                }
+                else if (l.includes('full name') || l.includes('fullname') || (l.includes('name') && !l.includes('first') && !l.includes('last') && !l.includes('christ') && !l.includes('church'))) d.fullName = val || p;
             }
             if ((!d.first || !d.last) && d.fullName) {
-                const spaceIdx = d.fullName.indexOf(' ');
-                if (spaceIdx > -1) {
-                    if (!d.first) d.first = d.fullName.substring(0, spaceIdx).trim();
-                    if (!d.last) d.last = d.fullName.substring(spaceIdx + 1).trim();
-                } else { if (!d.first) d.first = d.fullName; }
+                const si = d.fullName.indexOf(' ');
+                if (si > -1) { if (!d.first) d.first = d.fullName.substring(0, si).trim(); if (!d.last) d.last = d.fullName.substring(si + 1).trim(); }
+                else { if (!d.first) d.first = d.fullName; }
             }
-            if (!d.first && parts.length >= 4) {
-                d.church = d.church || parts[0] || '';
-                d.christ = d.christ || parts[1] || '';
-                d.first = parts[2] || '';
-                d.last = parts[3] || '';
-                d.gender = d.gender || parts[4] || '';
-                d.phone = d.phone || parts[5] || '';
-            }
-            if (!d.first && !d.last && !d.church && !d.phone && parts.length <= 3) {
-                const nameText = text.trim();
-                const spaceIdx = nameText.indexOf(' ');
-                if (spaceIdx > -1) {
-                    d.first = nameText.substring(0, spaceIdx).trim();
-                    d.last = nameText.substring(spaceIdx + 1).trim();
-                } else if (nameText) { d.first = nameText; }
-            }
-            if (d.gender) {
-                const g = d.gender.toLowerCase();
-                d.gender = (g.includes('male') || g === 'm') ? 'Male' : (g.includes('female') || g === 'f') ? 'Female' : '';
-            }
+            if (!d.first && parts.length >= 4) { d.church = d.church || parts[0]||''; d.christ = d.christ || parts[1]||''; d.first = parts[2]||''; d.last = parts[3]||''; d.gender = d.gender || parts[4]||''; d.phone = d.phone || parts[5]||''; }
+            if (!d.first && !d.last && !d.church && !d.phone && parts.length <= 3) { const nt = text.trim(); const si = nt.indexOf(' '); if (si > -1) { d.first = nt.substring(0, si).trim(); d.last = nt.substring(si + 1).trim(); } else if (nt) d.first = nt; }
+            if (d.gender) { const g = d.gender.toLowerCase(); d.gender = (g.includes('male') || g === 'm') ? 'Male' : (g.includes('female') || g === 'f') ? 'Female' : ''; }
             return d;
         }
 
@@ -1453,35 +1103,22 @@
             if (row) {
                 if (isAttendanceScan) {
                     if (isAttendanceOpen && currentAttendanceMark) {
-                        if (!markedThisMark.has(fullName.toLowerCase())) {
-                            markNextAvailableMark(row);
-                            markedThisMark.add(fullName.toLowerCase());
-                            showToast(`Scanned: ${fullName}`, true);
-                        } else showToast(`Already M${currentAttendanceMark}`, true);
+                        if (!markedThisMark.has(fullName.toLowerCase())) { markNextAvailableMark(row); markedThisMark.add(fullName.toLowerCase()); showToast(`Scanned: ${fullName}`, true); }
+                        else showToast(`Already M${currentAttendanceMark}`, true);
                     } else {
                         const nm = getCurrentMaxAttendanceMark() + 1;
                         if (nm > 26) { showToast("All 26 filled", true); return; }
-                        currentAttendanceMark = nm;
-                        markedThisMark.clear();
-                        startCountdown();
-                        markNextAvailableMark(row);
-                        markedThisMark.add(fullName.toLowerCase());
+                        currentAttendanceMark = nm; markedThisMark.clear(); startCountdown();
+                        markNextAvailableMark(row); markedThisMark.add(fullName.toLowerCase());
                         showToast(`Scanned: ${fullName}`, true);
                     }
-                } else {
-                    showToast("Already registered!");
-                    if (regCameraModal.classList.contains('active')) scanRegCam();
-                }
+                } else { showToast("Already registered!"); if (regCameraModal.classList.contains('active')) scanRegCam(); }
             } else {
-                if (isAttendanceScan) {
-                    showToast("New student? Use registration", true); return;
-                } else {
+                if (isAttendanceScan) { showToast("New student? Use registration", true); return; }
+                else {
                     showToast("New Student");
                     if (regCameraModal.classList.contains('active')) closeRegCam();
-                    formModal.classList.add('active');
-                    studentForm.reset();
-                    genderBtns.forEach(b => b.classList.remove('selected'));
-                    genderInput.value = "";
+                    openFormModal();
                     document.getElementById('church-name').value = d.church || '';
                     document.getElementById('christ-name').value = d.christ || '';
                     document.getElementById('first-name').value = first;
@@ -1497,26 +1134,13 @@
 
         const RECENT_T = 'recentDocTitles', RECENT_F = 'recentDocFiles';
         function getRecent(k) { return JSON.parse(localStorage.getItem(k) || '[]'); }
-        function saveRecent(k, v) {
-            let l = getRecent(k);
-            l = l.filter(i => i !== v);
-            l.unshift(v);
-            if (l.length > 5) l.pop();
-            localStorage.setItem(k, JSON.stringify(l));
-        }
+        function saveRecent(k, v) { let l = getRecent(k); l = l.filter(i => i !== v); l.unshift(v); if (l.length > 5) l.pop(); localStorage.setItem(k, JSON.stringify(l)); }
         function setupAuto(input, dropId, storageKey) {
             const drop = document.getElementById(dropId);
             input.addEventListener('focus', () => {
-                const items = getRecent(storageKey);
-                drop.innerHTML = '';
+                const items = getRecent(storageKey); drop.innerHTML = '';
                 if (!items.length) return;
-                items.forEach(i => {
-                    const d = document.createElement('div');
-                    d.className = 'autocomplete-item';
-                    d.textContent = i;
-                    d.addEventListener('mousedown', e => { e.preventDefault(); input.value = i; drop.classList.remove('show'); });
-                    drop.appendChild(d);
-                });
+                items.forEach(i => { const d = document.createElement('div'); d.className = 'autocomplete-item'; d.textContent = i; d.addEventListener('mousedown', e => { e.preventDefault(); input.value = i; drop.classList.remove('show'); }); drop.appendChild(d); });
                 drop.classList.add('show');
             });
             input.addEventListener('blur', () => drop.classList.remove('show'));
@@ -1525,26 +1149,22 @@
         setupAuto(docFileTitleInput, 'recent-file-titles', RECENT_F);
 
         document.getElementById('opt-docx').addEventListener('click', () => {
-            vibrate(30); exportContextMenu.classList.remove('active');
-            currentExportType = 'docx'; currentHistoryExportId = null;
+            vibrate(30); exportContextMenu.classList.remove('active'); currentExportType = 'docx'; currentHistoryExportId = null;
             document.getElementById('title-popup-header').textContent = "Export Document";
             document.getElementById('main-export-inputs').style.display = 'block';
-            docPageTitleInput.value = ''; docFileTitleInput.value = '';
-            docPercentFilterInput.value = '0';
+            docPageTitleInput.value = ''; docFileTitleInput.value = ''; docPercentFilterInput.value = '0';
             titlePopupModal.classList.add('active'); docPageTitleInput.focus();
         });
         titleCancelBtn.addEventListener('click', () => titlePopupModal.classList.remove('active'));
         titleDownloadBtn.addEventListener('click', () => {
-            vibrate(30);
-            const pf = parseInt(docPercentFilterInput.value) || 0;
+            vibrate(30); const pf = parseInt(docPercentFilterInput.value) || 0;
             if (currentHistoryExportId) {
                 if (fbReady) {
                     const hRef = fbRef(`history/${currentHistoryExportId}`);
                     fb.onValue(hRef, snap => {
                         const item = snap.val();
                         if (item) {
-                            const headers = ['#','Full Name','G'];
-                            let mx = 0;
+                            const headers = ['#','Full Name','G']; let mx = 0;
                             item.data.forEach(s => { s.marks.forEach((m, i) => { if (m && i+1 > mx) mx = i+1; }); });
                             for (let i = 1; i <= mx; i++) headers.push(`M${i}`);
                             headers.push('TM'); headers.push('%');
@@ -1553,41 +1173,36 @@
                                 if (parseFloat(s.percent) >= pf) {
                                     const r = [String(data.length+1), s.name, s.gender];
                                     for (let m = 0; m < mx; m++) r.push(s.marks[m]||'');
-                                    r.push(s.total);
-                                    r.push(String(s.percent).replace('%',''));
+                                    r.push(s.total); r.push(String(s.percent).replace('%',''));
                                     data.push(r);
                                 }
                             });
                             genDocx(item.title, item.title.replace(/[^a-z0-9]/gi,'_'), { headers, data, maxMark: mx });
                         }
                     }, { onlyOnce: true });
-                } else { showToast("Offline - cannot export history", true); }
+                } else showToast("Offline - cannot export history", true);
                 currentHistoryExportId = null;
             } else {
                 const pt = docPageTitleInput.value.trim(), ft = docFileTitleInput.value.trim();
                 if (!pt || !ft) { showToast("Enter text"); return; }
-                saveRecent(RECENT_T, pt); saveRecent(RECENT_F, ft);
-                genDocx(pt, ft, null, pf);
+                saveRecent(RECENT_T, pt); saveRecent(RECENT_F, ft); genDocx(pt, ft, null, pf);
             }
             titlePopupModal.classList.remove('active');
         });
         docFileTitleInput.addEventListener('keyup', e => { if (e.key === 'Enter') titleDownloadBtn.click(); });
 
         function getTableData(filterPct) {
-            const rows = tableBody.querySelectorAll('tr');
-            if (!rows.length) return null;
+            const rows = tableBody.querySelectorAll('tr'); if (!rows.length) return null;
             const mx = Math.max(getCurrentMaxAttendanceMark(), 1);
             const headers = ['#','Full Name','G'];
             for (let i = 1; i <= mx; i++) headers.push(`M${i}`);
             headers.push('TM'); headers.push('%');
-            const data = [];
-            let c = 1;
+            const data = []; let c = 1;
             rows.forEach(r => {
                 if (parseFloat(r.cells[30].textContent) >= filterPct) {
                     const rd = [String(c), r.cells[1].textContent.trim(), r.cells[2].textContent.trim()];
                     for (let m = 1; m <= mx; m++) rd.push(r.cells[2+m].textContent.trim()||'');
-                    rd.push(r.cells[29].textContent.trim());
-                    rd.push(r.cells[30].textContent.trim());
+                    rd.push(r.cells[29].textContent.trim()); rd.push(r.cells[30].textContent.trim());
                     data.push(rd); c++;
                 }
             });
@@ -1601,10 +1216,8 @@
                 const { headers, data } = td;
                 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
                 const orient = headers.length > 10 ? 'landscape' : 'portrait';
-                let pw, ph;
-                if (orient === 'portrait') { pw = 11906; ph = 16838; } else { pw = 16838; ph = 11906; }
-                const margin = 1440;
-                const usable = (orient === 'portrait' ? pw : ph) - margin * 2;
+                let pw, ph; if (orient === 'portrait') { pw = 11906; ph = 16838; } else { pw = 16838; ph = 11906; }
+                const margin = 1440; const usable = (orient === 'portrait' ? pw : ph) - margin * 2;
                 const nameIdx = headers.indexOf('Full Name');
                 const markCols = headers.filter(h => h !== '#' && h !== 'Full Name' && h !== 'G' && h !== 'TM' && h !== '%').length;
                 const nameW = Math.min(Math.max(Math.floor(usable * 0.22), 1200), 3500);
@@ -1614,12 +1227,9 @@
                 const remaining = usable - nameW - numW - tmW - pctW;
                 const markW = Math.min(Math.max(Math.floor(remaining / Math.max(markCols, 1)), 300), 600);
                 const colWidths = headers.map(h => {
-                    if (h === '#') return numW;
-                    if (h === 'Full Name') return nameW;
-                    if (h === 'G') return numW;
-                    if (h === 'TM') return tmW;
-                    if (h === '%') return pctW;
-                    return markW;
+                    if (h === '#') return numW; if (h === 'Full Name') return nameW;
+                    if (h === 'G') return numW; if (h === 'TM') return tmW;
+                    if (h === '%') return pctW; return markW;
                 });
                 const totalW = colWidths.reduce((a, b) => a + b, 0);
                 function makeCell(text, isHeader, colIdx) {
@@ -1636,95 +1246,59 @@
                 const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 wp14"><w:body><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="200"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="32"/><w:szCs w:val="32"/><w:color w:val="3C0028"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr><w:t>' + esc(docTitle) + '</w:t></w:r></w:p><w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="' + totalW + '" w:type="dxa"/><w:jc w:val="center"/><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:left w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:right w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="999999"/></w:tblBorders><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="40" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="40" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' + gridCols + '</w:tblGrid><w:tr>' + headerRow + '</w:tr>' + dataRows + '</w:tbl><w:sectPr><w:pgSz w:w="' + pw + '" w:h="' + ph + '" w:orient="' + orient + '"/><w:pgMar w:top="' + margin + '" w:right="' + margin + '" w:bottom="' + margin + '" w:left="' + margin + '" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
                 const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
                 const rl = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
-                const blob = createZip([
-                    { name: '[Content_Types].xml', content: ct },
-                    { name: '_rels/.rels', content: rl },
-                    { name: 'word/document.xml', content: xml }
-                ]);
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
+                const blob = createZip([{ name: '[Content_Types].xml', content: ct },{ name: '_rels/.rels', content: rl },{ name: 'word/document.xml', content: xml }]);
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
                 a.download = fileTitle.replace(/[^a-z0-9]/gi,'_').toLowerCase() + '_' + new Date().toISOString().slice(0,10) + '.docx';
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                URL.revokeObjectURL(a.href);
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
                 showToast("DOCX Downloaded!");
             } catch(e) { console.error("DOCX Error:", e); showToast("DOCX Error"); }
         }
 
         function createZip(files) {
-            const enc = new TextEncoder();
-            const parts = [], cd = [];
-            let off = 0;
+            const enc = new TextEncoder(); const parts = [], cd = []; let off = 0;
             files.forEach(f => {
-                const content = enc.encode(f.content);
-                const name = enc.encode(f.name);
+                const content = enc.encode(f.content); const name = enc.encode(f.name);
                 const dt = new Date();
                 const time = ((dt.getHours()<<11)|(dt.getMinutes()<<5)|(dt.getSeconds()>>1));
                 const date = (((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate());
-                const lh = new Uint8Array(30);
-                const lhv = new DataView(lh.buffer);
-                lhv.setUint32(0, 0x04034b50, true);
-                lhv.setUint16(4, 20, true); lhv.setUint16(6, 0, true);
-                lhv.setUint16(8, 0, true); lhv.setUint16(10, time, true);
-                lhv.setUint16(12, date, true);
-                lhv.setUint32(14, crc32(content), true);
-                lhv.setUint32(18, content.length, true);
-                lhv.setUint32(22, content.length, true);
-                lhv.setUint16(26, name.length, true);
+                const lh = new Uint8Array(30); const lhv = new DataView(lh.buffer);
+                lhv.setUint32(0, 0x04034b50, true); lhv.setUint16(4, 20, true); lhv.setUint16(6, 0, true);
+                lhv.setUint16(8, 0, true); lhv.setUint16(10, time, true); lhv.setUint16(12, date, true);
+                lhv.setUint32(14, crc32(content), true); lhv.setUint32(18, content.length, true);
+                lhv.setUint32(22, content.length, true); lhv.setUint16(26, name.length, true);
                 parts.push(lh, name, content);
-                const ch = new Uint8Array(46);
-                const chv = new DataView(ch.buffer);
-                chv.setUint32(0, 0x02014b50, true);
-                chv.setUint16(4, 20, true); chv.setUint16(6, 20, true);
-                chv.setUint16(8, 0, true); chv.setUint16(10, 0, true);
-                chv.setUint16(12, time, true); chv.setUint16(14, date, true);
-                chv.setUint32(16, crc32(content), true);
-                chv.setUint32(20, content.length, true);
-                chv.setUint32(24, content.length, true);
+                const ch = new Uint8Array(46); const chv = new DataView(ch.buffer);
+                chv.setUint32(0, 0x02014b50, true); chv.setUint16(4, 20, true); chv.setUint16(6, 20, true);
+                chv.setUint16(8, 0, true); chv.setUint16(10, 0, true); chv.setUint16(12, time, true);
+                chv.setUint16(14, date, true); chv.setUint32(16, crc32(content), true);
+                chv.setUint32(20, content.length, true); chv.setUint32(24, content.length, true);
                 chv.setUint16(28, name.length, true); chv.setUint16(30, 0, true);
-                chv.setUint16(32, 0, true); chv.setUint16(34, 0, true);
-                chv.setUint16(36, 0, true); chv.setUint32(38, 0, true);
-                chv.setUint32(42, off, true);
-                cd.push(ch, name);
-                off += 30 + name.length + content.length;
+                chv.setUint16(32, 0, true); chv.setUint16(34, 0, true); chv.setUint16(36, 0, true);
+                chv.setUint32(38, 0, true); chv.setUint32(42, off, true);
+                cd.push(ch, name); off += 30 + name.length + content.length;
             });
-            const cdOff = off;
-            let cdSz = 0;
-            cd.forEach(p => { parts.push(p); cdSz += p.length; });
-            const eocd = new Uint8Array(22);
-            const eocdv = new DataView(eocd.buffer);
-            eocdv.setUint32(0, 0x06054b50, true); eocdv.setUint16(4, 0, true);
-            eocdv.setUint16(6, 0, true); eocdv.setUint16(8, files.length, true);
-            eocdv.setUint16(10, files.length, true); eocdv.setUint32(12, cdSz, true);
-            eocdv.setUint32(16, cdOff, true); eocdv.setUint16(20, 0, true);
+            const cdOff = off; let cdSz = 0; cd.forEach(p => { parts.push(p); cdSz += p.length; });
+            const eocd = new Uint8Array(22); const eocdv = new DataView(eocd.buffer);
+            eocdv.setUint32(0, 0x06054b50, true); eocdv.setUint16(4, 0, true); eocdv.setUint16(6, 0, true);
+            eocdv.setUint16(8, files.length, true); eocdv.setUint16(10, files.length, true);
+            eocdv.setUint32(12, cdSz, true); eocdv.setUint32(16, cdOff, true); eocdv.setUint16(20, 0, true);
             parts.push(eocd);
             return new Blob(parts, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
         }
 
         function crc32(data) {
             const table = new Uint32Array(256);
-            for (let i = 0; i < 256; i++) {
-                let c = i;
-                for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-                table[i] = c;
-            }
-            let crc = 0xFFFFFFFF;
-            for (let i = 0; i < data.length; i++) crc = (crc >>> 8) ^ table[(crc ^ data[i]) & 0xFF];
+            for (let i = 0; i < 256; i++) { let c = i; for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); table[i] = c; }
+            let crc = 0xFFFFFFFF; for (let i = 0; i < data.length; i++) crc = (crc >>> 8) ^ table[(crc ^ data[i]) & 0xFF];
             return (crc ^ 0xFFFFFFFF) >>> 0;
         }
 
-        const manifestContent = {
-            name: "\u200E ", short_name: "AS", start_url: "AS/",
-            display: "standalone", background_color: "#000", theme_color: "#3C0028",
-            icons: [{
-                src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
-                sizes: "192x192", type: "image/svg+xml"
-            }]
-        };
+        const manifestContent = { name: "\u200E ", short_name: "AS", start_url: "AS/", display: "standalone", background_color: "#000", theme_color: "#3C0028", icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }] };
         document.getElementById('app-manifest').href = URL.createObjectURL(new Blob([JSON.stringify(manifestContent)], { type: 'application/json' }));
 
         if ('serviceWorker' in navigator) {
             const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'];
-            const sw = 'const CN="AttendanceApp_v5",U=' + JSON.stringify(urls) + ';self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match("./")))});';
+            const sw = 'const CN="AttendanceApp_v6",U=' + JSON.stringify(urls) + ';self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match("./")))});';
             navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
         }
 
@@ -1732,16 +1306,12 @@
             const rem = getRemaining();
             const st = JSON.parse(localStorage.getItem('attendanceState') || 'null');
             if (rem > 0 && st && st.isOpen) {
-                isAttendanceOpen = false;
-                currentAttendanceMark = st.currentMark;
+                isAttendanceOpen = false; currentAttendanceMark = st.currentMark;
                 markedThisMark = new Set(st.markedSet || []);
-                startCountdown(rem);
-                showToast(`Resumed: ${rem}s`, true);
+                startCountdown(rem); showToast(`Resumed: ${rem}s`, true);
             } else if (rem <= 0 && st && st.isOpen) {
-                currentAttendanceMark = st.currentMark;
-                markedThisMark = new Set(st.markedSet || []);
-                markAbsentAfterTimeout();
-                clearCountdownEnd();
+                currentAttendanceMark = st.currentMark; markedThisMark = new Set(st.markedSet || []);
+                markAbsentAfterTimeout(); clearCountdownEnd();
                 localStorage.setItem('attendanceState', JSON.stringify({ ...st, isOpen: false }));
             }
         });
@@ -1752,74 +1322,49 @@
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 [listOverlay, formModal, regContextMenu, exportContextMenu, detailPopup, titlePopupModal, archiveTitleModal, settingsPanel, historyModal, historyViewModal].forEach(m => m.classList.remove('active'));
-                closeCam(); closeRegCam();
-                historyDeleteModal.style.display = 'none';
+                closeCam(); closeRegCam(); historyDeleteModal.style.display = 'none';
                 if (confirmModal.classList.contains('active')) hideConfirm();
             }
         });
 
         window.addEventListener('online', async () => {
-            updateBadges();
-            showToast("Back online! Syncing...", true);
+            updateBadges(); showToast("Back online! Syncing...", true);
             if (!fbReady) await loadFirebase();
-            if (fbReady) {
-                await syncLocalToCloud();
-                loadFirebaseData();
-                loadHistoryFromFirebase();
-            }
+            if (fbReady) { await syncLocalToCloud(); loadFirebaseData(); loadHistoryFromFirebase(); }
         });
-
-        window.addEventListener('offline', () => {
-            updateBadges();
-            showToast("Offline mode", true);
-        });
+        window.addEventListener('offline', () => { updateBadges(); showToast("Offline mode", true); });
 
         async function initApp() {
-            loadFromLocalStorage();
-            loadHistoryFromLocalStorage();
+            loadFromLocalStorage(); loadHistoryFromLocalStorage();
             const loaded = await loadFirebase();
             if (loaded) {
                 fb.onAuth(fb.auth, async user => {
                     if (user) {
                         localStorage.setItem('offline_auth', '1');
-                        appLockModal.style.display = 'none';
-                        logoutBtn.style.display = 'flex';
-                        if (navigator.onLine) {
-                            await syncLocalToCloud();
-                            loadFirebaseData();
-                            loadHistoryFromFirebase();
-                        } else updateBadges();
+                        appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex';
+                        if (navigator.onLine) { await syncLocalToCloud(); loadFirebaseData(); loadHistoryFromFirebase(); }
+                        else updateBadges();
                     } else {
-                        appLockModal.style.display = 'flex';
-                        logoutBtn.style.display = 'none';
+                        appLockModal.style.display = 'flex'; logoutBtn.style.display = 'none';
                         lockInput.value = ''; lockError.style.display = 'none'; lockInput.focus();
                     }
                 });
-                lockBtn.addEventListener('click', async () => {
-                    try { await fb.signIn(fb.auth, EMAIL, lockInput.value); }
-                    catch(e) { lockError.style.display = 'block'; lockInput.value = ''; }
-                });
+                lockBtn.addEventListener('click', async () => { try { await fb.signIn(fb.auth, EMAIL, lockInput.value); } catch(e) { lockError.style.display = 'block'; lockInput.value = ''; } });
                 lockInput.addEventListener('keyup', e => { if (e.key === 'Enter') lockBtn.click(); });
                 logoutBtn.addEventListener('click', async () => { await fb.signOut(fb.auth); });
             } else {
-                console.log('[Init] Offline mode');
                 updateBadges(); showToast('Offline Mode', true);
                 const wasAuth = localStorage.getItem('offline_auth');
                 if (wasAuth) { appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex'; }
                 else { appLockModal.style.display = 'flex'; lockInput.focus(); }
                 lockBtn.addEventListener('click', () => {
-                    if (lockInput.value === 'Debebe!') {
-                        localStorage.setItem('offline_auth', '1');
-                        appLockModal.style.display = 'none';
-                        logoutBtn.style.display = 'flex';
-                    } else { lockError.style.display = 'block'; lockInput.value = ''; lockInput.focus(); }
+                    if (lockInput.value === 'Debebe!') { localStorage.setItem('offline_auth', '1'); appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex'; }
+                    else { lockError.style.display = 'block'; lockInput.value = ''; lockInput.focus(); }
                 });
                 lockInput.addEventListener('keyup', e => { if (e.key === 'Enter') lockBtn.click(); });
                 logoutBtn.addEventListener('click', () => {
-                    localStorage.removeItem('offline_auth');
-                    appLockModal.style.display = 'flex';
-                    logoutBtn.style.display = 'none';
-                    lockInput.value = ''; lockError.style.display = 'none'; lockInput.focus();
+                    localStorage.removeItem('offline_auth'); appLockModal.style.display = 'flex';
+                    logoutBtn.style.display = 'none'; lockInput.value = ''; lockError.style.display = 'none'; lockInput.focus();
                 });
             }
         }
