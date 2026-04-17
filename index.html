@@ -33,11 +33,9 @@
         .countdown.active{opacity:1;pointer-events:auto}
         .countdown.warning{color:#ff4d4d;animation:pulse 1s infinite}
         @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
-        .offline-badge{position:fixed;top:80px;left:20px;background:rgba(183,28,28,.9);color:#fff;padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:600;z-index:11;display:none;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.4);animation:popIn .3s}
-        .offline-badge.active{display:flex}
-        .sync-badge{position:fixed;top:80px;left:20px;background:#3C0028;color:#fff;padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:600;z-index:11;display:none;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.4);animation:popIn .3s}
+        .sync-badge{position:fixed;top:80px;left:20px;background:#E6B800;color:#3C0028;padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:600;z-index:11;display:none;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.4);animation:popIn .3s}
         .sync-badge.active{display:flex}
-        .sync-badge i{animation:spin 1s linear infinite}
+        .sync-badge i{animation:spin 1s linear infinite;color:#3C0028}
         @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
         .list-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:100;display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;padding-top:100px}
         .list-overlay.active{opacity:1;visibility:visible}
@@ -200,7 +198,6 @@
             <div id="history-delete-error">Incorrect Password</div>
         </div>
     </div>
-    <div id="offline-badge" class="offline-badge"><i class="fa-solid fa-wifi-slash"></i> Offline</div>
     <div id="sync-badge" class="sync-badge"><i class="fa-solid fa-rotate"></i> Syncing...</div>
     <div class="top-left">
         <div id="countdown-timer" class="countdown"><span id="countdown-number">20</span></div>
@@ -406,13 +403,7 @@
             localStorage.setItem('att_v', String(localVersion));
         }
 
-        const offlineBadge = document.getElementById('offline-badge');
         const syncBadge = document.getElementById('sync-badge');
-        function updateBadges() {
-            if (navigator.onLine) offlineBadge.classList.remove('active');
-            else { offlineBadge.classList.add('active'); syncBadge.classList.remove('active'); }
-        }
-        updateBadges();
 
         const animateButton = b => { b.style.transform = 'scale(0.92)'; setTimeout(() => b.style.transform = '', 140); };
         const vibrate = d => { if ('vibrate' in navigator) navigator.vibrate(d || 30); };
@@ -518,6 +509,7 @@
         function populateTable(data) {
             tableBody.innerHTML = '';
             let c = 1;
+            const rows = [];
             Object.keys(data).forEach(key => {
                 if (key === '_v') return;
                 const s = data[key]; if (s === null) return;
@@ -533,8 +525,11 @@
                 row.dataset.gender = s.gender||''; row.dataset.phone = s.phone||'';
                 row.dataset.date = s.date||''; row.dataset.time = s.time||'';
                 row.dataset.startMark = s.startMark||1;
-                tableBody.appendChild(row); c++;
+                rows.push(row); c++;
             });
+            rows.sort((a, b) => a.cells[1].textContent.trim().toLowerCase().localeCompare(b.cells[1].textContent.trim().toLowerCase()));
+            rows.forEach(r => tableBody.appendChild(r));
+            updateRowNumbers();
             updateAllTotals();
         }
 
@@ -774,10 +769,11 @@
         }
         function viewHistory(key, item) {
             historyViewTitle.textContent = item.title;
+            const sortedData = [...item.data].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
             let h = '<table style="width:max-content;min-width:100%"><thead><tr><th>#</th><th>Full Name</th><th>Gender</th>';
             for (let i = 1; i <= 26; i++) h += `<th>M${i}</th>`;
             h += '<th>TM</th><th>%</th></tr></thead><tbody>';
-            item.data.forEach((s, i) => { h += `<tr><td>${i+1}</td><td style="text-align:left;padding-left:10px">${s.name}</td><td>${s.gender}</td>${s.marks.map(m=>`<td>${m}</td>`).join('')}<td style="color:#00ff9d;font-weight:bold">${s.total}</td><td style="color:#00ff9d;font-weight:bold">${String(s.percent).replace('%','')}</td></tr>`; });
+            sortedData.forEach((s, i) => { h += `<tr><td>${i+1}</td><td style="text-align:left;padding-left:10px">${s.name}</td><td>${s.gender}</td>${s.marks.map(m=>`<td>${m}</td>`).join('')}<td style="color:#00ff9d;font-weight:bold">${s.total}</td><td style="color:#00ff9d;font-weight:bold">${String(s.percent).replace('%','')}</td></tr>`; });
             h += '</tbody></table>'; historyTableContainer.innerHTML = h; historyViewModal.classList.add('active');
         }
 
@@ -1154,12 +1150,13 @@
                     fb.onValue(hRef, snap => {
                         const item = snap.val();
                         if (item) {
+                            const sortedData = [...item.data].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
                             const headers = ['#','Full Name','G']; let mx = 0;
-                            item.data.forEach(s => { s.marks.forEach((m, i) => { if (m && i+1 > mx) mx = i+1; }); });
+                            sortedData.forEach(s => { s.marks.forEach((m, i) => { if (m && i+1 > mx) mx = i+1; }); });
                             for (let i = 1; i <= mx; i++) headers.push(`M${i}`);
                             headers.push('TM'); headers.push('%');
                             const data = [];
-                            item.data.forEach(s => {
+                            sortedData.forEach(s => {
                                 if (parseFloat(s.percent) >= pf) {
                                     const r = [String(data.length+1), s.name, s.gender];
                                     for (let m = 0; m < mx; m++) r.push(s.marks[m]||'');
@@ -1170,7 +1167,7 @@
                             genDocx(item.title, item.title.replace(/[^a-z0-9]/gi,'_'), { headers, data, maxMark: mx });
                         }
                     }, { onlyOnce: true });
-                } else showToast("Offline - cannot export history", true);
+                } else showToast("Cannot export history", true);
                 currentHistoryExportId = null;
             } else {
                 const pt = docPageTitleInput.value.trim(), ft = docFileTitleInput.value.trim();
@@ -1182,13 +1179,14 @@
         docFileTitleInput.addEventListener('keyup', e => { if (e.key === 'Enter') titleDownloadBtn.click(); });
 
         function getTableData(filterPct) {
-            const rows = tableBody.querySelectorAll('tr'); if (!rows.length) return null;
+            const rows = Array.from(tableBody.querySelectorAll('tr')); if (!rows.length) return null;
+            const sortedRows = [...rows].sort((a, b) => a.cells[1].textContent.trim().toLowerCase().localeCompare(b.cells[1].textContent.trim().toLowerCase()));
             const mx = Math.max(getCurrentMaxAttendanceMark(), 1);
             const headers = ['#','Full Name','G'];
             for (let i = 1; i <= mx; i++) headers.push(`M${i}`);
             headers.push('TM'); headers.push('%');
             const data = []; let c = 1;
-            rows.forEach(r => {
+            sortedRows.forEach(r => {
                 if (parseFloat(r.cells[30].textContent) >= filterPct) {
                     const rd = [String(c), r.cells[1].textContent.trim(), r.cells[2].textContent.trim()];
                     for (let m = 1; m <= mx; m++) rd.push(r.cells[2+m].textContent.trim()||'');
@@ -1224,64 +1222,27 @@
                 const totalW = colWidths.reduce((a, b) => a + b, 0);
 
                 function makeCell(text, isHeader, colIdx) {
-    const w = colWidths[colIdx] || 500;
-    const isTM = headers[colIdx] === 'TM';
-    const isPct = headers[colIdx] === '%';
-    const isName = colIdx === nameIdx;
-    const isMarkHeader = isHeader && /^M\d+$/.test(text);
-
-    let bg, co, bold, jc;
-
-    if (isHeader) {
-        bg = (isTM || isPct) ? 'E6B800' : '3C0028';
-        co = (isTM || isPct) ? '3C0028' : 'E6B800';
-        bold = '<w:b/>';
-        jc = 'center';
-    } else {
-        bg = (isTM || isPct) ? 'FFF3CD' : 'FFFFFF';
-        co = (isTM || isPct) ? '3C0028' : '000000';
-        bold = '';
-        jc = isName ? 'left' : 'center';
-    }
-
-    if (isMarkHeader) {
-        const num = text.substring(1);
-        return '<w:tc>' +
-            '<w:tcPr>' +
-                '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
-                '<w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/>' +
-            '</w:tcPr>' +
-            '<w:p>' +
-                '<w:pPr><w:jc w:val="center"/><w:spacing w:before="30" w:after="0" w:line="200" w:lineRule="auto"/></w:pPr>' +
-                '<w:r>' +
-                    '<w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
-                    '<w:t>M</w:t>' +
-                '</w:r>' +
-            '</w:p>' +
-            '<w:p>' +
-                '<w:pPr><w:jc w:val="center"/><w:spacing w:before="10" w:after="30" w:line="220" w:lineRule="auto"/></w:pPr>' +
-                '<w:r>' +
-                    '<w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
-                    '<w:t>' + esc(num) + '</w:t>' +
-                '</w:r>' +
-            '</w:p>' +
-        '</w:tc>';
-    }
-
-    return '<w:tc>' +
-        '<w:tcPr>' +
-            '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
-            '<w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/>' +
-        '</w:tcPr>' +
-        '<w:p>' +
-            '<w:pPr><w:jc w:val="' + jc + '"/><w:spacing w:before="20" w:after="20"/></w:pPr>' +
-            '<w:r>' +
-                '<w:rPr>' + bold + '<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
-                '<w:t xml:space="preserve">' + esc(text) + '</w:t>' +
-            '</w:r>' +
-        '</w:p>' +
-    '</w:tc>';
-}
+                    const w = colWidths[colIdx] || 500;
+                    const isTM = headers[colIdx] === 'TM';
+                    const isPct = headers[colIdx] === '%';
+                    const isName = colIdx === nameIdx;
+                    const isMarkHeader = isHeader && /^M\d+$/.test(text);
+                    let bg, co, bold, jc;
+                    if (isHeader) {
+                        bg = (isTM || isPct) ? 'E6B800' : '3C0028';
+                        co = (isTM || isPct) ? '3C0028' : 'E6B800';
+                        bold = '<w:b/>'; jc = 'center';
+                    } else {
+                        bg = (isTM || isPct) ? 'FFF3CD' : 'FFFFFF';
+                        co = (isTM || isPct) ? '3C0028' : '000000';
+                        bold = ''; jc = isName ? 'left' : 'center';
+                    }
+                    if (isMarkHeader) {
+                        const num = text.substring(1);
+                        return '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="30" w:after="0" w:line="200" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr><w:t>M</w:t></w:r></w:p><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="10" w:after="30" w:line="220" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr><w:t>' + esc(num) + '</w:t></w:r></w:p></w:tc>';
+                    }
+                    return '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/></w:tcPr><w:p><w:pPr><w:jc w:val="' + jc + '"/><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr>' + bold + '<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr><w:t xml:space="preserve">' + esc(text) + '</w:t></w:r></w:p></w:tc>';
+                }
 
                 const headerRow = headers.map((h, i) => makeCell(h, true, i)).join('');
                 const dataRows = data.map(row => '<w:tr>' + row.map((c, i) => makeCell(c, false, i)).join('') + '</w:tr>').join('');
@@ -1371,11 +1332,11 @@
         });
 
         window.addEventListener('online', async () => {
-            updateBadges(); showToast("Back online! Syncing...", true);
+            showToast("Syncing...", true);
             if (!fbReady) await loadFirebase();
             if (fbReady) { await syncLocalToCloud(); loadFirebaseData(); loadHistoryFromFirebase(); }
         });
-        window.addEventListener('offline', () => { updateBadges(); showToast("Offline mode", true); });
+        window.addEventListener('offline', () => {});
 
         async function initApp() {
             loadFromLocalStorage(); loadHistoryFromLocalStorage();
@@ -1386,7 +1347,6 @@
                         localStorage.setItem('offline_auth', '1');
                         appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex';
                         if (navigator.onLine) { await syncLocalToCloud(); loadFirebaseData(); loadHistoryFromFirebase(); }
-                        else updateBadges();
                     } else {
                         appLockModal.style.display = 'flex'; logoutBtn.style.display = 'none';
                         lockInput.value = ''; lockError.style.display = 'none'; lockInput.focus();
@@ -1396,7 +1356,6 @@
                 lockInput.addEventListener('keyup', e => { if (e.key === 'Enter') lockBtn.click(); });
                 logoutBtn.addEventListener('click', async () => { await fb.signOut(fb.auth); });
             } else {
-                updateBadges(); showToast('Offline Mode', true);
                 const wasAuth = localStorage.getItem('offline_auth');
                 if (wasAuth) { appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex'; }
                 else { appLockModal.style.display = 'flex'; lockInput.focus(); }
