@@ -1224,64 +1224,64 @@
                 const totalW = colWidths.reduce((a, b) => a + b, 0);
 
                 function makeCell(text, isHeader, colIdx) {
-                    const w = colWidths[colIdx] || 500;
-                    const isTM = headers[colIdx] === 'TM';
-                    const isPct = headers[colIdx] === '%';
-                    const isName = colIdx === nameIdx;
-                    const isMarkHeader = isHeader && /^M\d+$/.test(text);
+    const w = colWidths[colIdx] || 500;
+    const isTM = headers[colIdx] === 'TM';
+    const isPct = headers[colIdx] === '%';
+    const isName = colIdx === nameIdx;
+    const isMarkHeader = isHeader && /^M\d+$/.test(text);
 
-                    let bg, co, bold, jc;
+    let bg, co, bold, jc;
 
-                    if (isHeader) {
-                        bg = (isTM || isPct) ? 'E6B800' : '3C0028';
-                        co = (isTM || isPct) ? '3C0028' : 'E6B800';
-                        bold = '<w:b/>';
-                        jc = 'center';
-                    } else {
-                        bg = (isTM || isPct) ? 'FFF3CD' : 'FFFFFF';
-                        co = (isTM || isPct) ? '3C0028' : '000000';
-                        bold = '';
-                        jc = isName ? 'left' : 'center';
-                    }
+    if (isHeader) {
+        bg = (isTM || isPct) ? 'E6B800' : '3C0028';
+        co = (isTM || isPct) ? '3C0028' : 'E6B800';
+        bold = '<w:b/>';
+        jc = 'center';
+    } else {
+        bg = (isTM || isPct) ? 'FFF3CD' : 'FFFFFF';
+        co = (isTM || isPct) ? '3C0028' : '000000';
+        bold = '';
+        jc = isName ? 'left' : 'center';
+    }
 
-                    if (isMarkHeader) {
-                        const num = text.substring(1);
-                        return '<w:tc>' +
-                            '<w:tcPr>' +
-                                '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
-                                '<w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/>' +
-                            '</w:tcPr>' +
-                            '<w:p>' +
-                                '<w:pPr><w:jc w:val="center"/><w:spacing w:before="30" w:after="0" w:line="200" w:lineRule="auto"/></w:pPr>' +
-                                '<w:r>' +
-                                    '<w:rPr><w:sz w:val="11"/><w:szCs w:val="11"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
-                                    '<w:t>M</w:t>' +
-                                '</w:r>' +
-                            '</w:p>' +
-                            '<w:p>' +
-                                '<w:pPr><w:jc w:val="center"/><w:spacing w:before="10" w:after="30" w:line="220" w:lineRule="auto"/></w:pPr>' +
-                                '<w:r>' +
-                                    '<w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
-                                    '<w:t>' + esc(num) + '</w:t>' +
-                                '</w:r>' +
-                            '</w:p>' +
-                        '</w:tc>';
-                    }
+    if (isMarkHeader) {
+        const num = text.substring(1);
+        return '<w:tc>' +
+            '<w:tcPr>' +
+                '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
+                '<w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/>' +
+            '</w:tcPr>' +
+            '<w:p>' +
+                '<w:pPr><w:jc w:val="center"/><w:spacing w:before="30" w:after="0" w:line="200" w:lineRule="auto"/></w:pPr>' +
+                '<w:r>' +
+                    '<w:rPr><w:b/><w:sz w:val="11"/><w:szCs w:val="11"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
+                    '<w:t>M</w:t>' +
+                '</w:r>' +
+            '</w:p>' +
+            '<w:p>' +
+                '<w:pPr><w:jc w:val="center"/><w:spacing w:before="10" w:after="30" w:line="220" w:lineRule="auto"/></w:pPr>' +
+                '<w:r>' +
+                    '<w:rPr><w:b/><w:sz w:val="11"/><w:szCs w:val="11"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
+                    '<w:t>' + esc(num) + '</w:t>' +
+                '</w:r>' +
+            '</w:p>' +
+        '</w:tc>';
+    }
 
-                    return '<w:tc>' +
-                        '<w:tcPr>' +
-                            '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
-                            '<w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/>' +
-                        '</w:tcPr>' +
-                        '<w:p>' +
-                            '<w:pPr><w:jc w:val="' + jc + '"/><w:spacing w:before="20" w:after="20"/></w:pPr>' +
-                            '<w:r>' +
-                                '<w:rPr>' + bold + '<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
-                                '<w:t xml:space="preserve">' + esc(text) + '</w:t>' +
-                            '</w:r>' +
-                        '</w:p>' +
-                    '</w:tc>';
-                }
+    return '<w:tc>' +
+        '<w:tcPr>' +
+            '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
+            '<w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/>' +
+        '</w:tcPr>' +
+        '<w:p>' +
+            '<w:pPr><w:jc w:val="' + jc + '"/><w:spacing w:before="20" w:after="20"/></w:pPr>' +
+            '<w:r>' +
+                '<w:rPr>' + bold + '<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
+                '<w:t xml:space="preserve">' + esc(text) + '</w:t>' +
+            '</w:r>' +
+        '</w:p>' +
+    '</w:tc>';
+}
 
                 const headerRow = headers.map((h, i) => makeCell(h, true, i)).join('');
                 const dataRows = data.map(row => '<w:tr>' + row.map((c, i) => makeCell(c, false, i)).join('') + '</w:tr>').join('');
