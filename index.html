@@ -892,31 +892,21 @@
             showToast(`Registered (Start M${sm})`);
         });
 
-        /* ═══════════════════════════════════
-           FORM MODAL OPEN / CLOSE — FIXED
-        ═══════════════════════════════════ */
         function openFormModal() {
             formModal.classList.add('active');
             studentForm.reset();
             genderBtns.forEach(b => b.classList.remove('selected'));
             genderInput.value = "";
         }
-
         function closeFormModal() {
             formModal.classList.remove('active');
             studentForm.reset();
             genderBtns.forEach(b => b.classList.remove('selected'));
             genderInput.value = "";
         }
-
-        // Cancel button — e.preventDefault + e.stopPropagation ይሰራል
         document.getElementById('cancel-register').addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            closeFormModal();
+            e.preventDefault(); e.stopPropagation(); closeFormModal();
         });
-
-        // Form modal background click — ውጭ ሲጫፍ ሲጫን ይዘጋል
         formModal.addEventListener('click', function(e) {
             if (e.target === formModal) closeFormModal();
         });
@@ -1232,77 +1222,70 @@
                     if (h === '%') return pctW; return markW;
                 });
                 const totalW = colWidths.reduce((a, b) => a + b, 0);
+
                 function makeCell(text, isHeader, colIdx) {
-    const w = colWidths[colIdx] || 500;
-    const isTM = headers[colIdx] === 'TM';
-    const isPct = headers[colIdx] === '%';
-    const isName = colIdx === nameIdx;
-    const isMarkHeader = isHeader && /^M\d+$/.test(text);
+                    const w = colWidths[colIdx] || 500;
+                    const isTM = headers[colIdx] === 'TM';
+                    const isPct = headers[colIdx] === '%';
+                    const isName = colIdx === nameIdx;
+                    const isMarkHeader = isHeader && /^M\d+$/.test(text);
 
-    let bg, co, bold, jc;
+                    let bg, co, bold, jc;
 
-    if (isHeader) {
-        bg = (isTM || isPct) ? 'E6B800' : '3C0028';
-        co = (isTM || isPct) ? '3C0028' : 'E6B800';
-        bold = '<w:b/>';
-        jc = 'center';
-    } else {
-        bg = (isTM || isPct) ? 'FFF3CD' : 'FFFFFF';
-        co = (isTM || isPct) ? '3C0028' : '000000';
-        bold = '';
-        jc = isName ? 'left' : 'center';
-    }
+                    if (isHeader) {
+                        bg = (isTM || isPct) ? 'E6B800' : '3C0028';
+                        co = (isTM || isPct) ? '3C0028' : 'E6B800';
+                        bold = '<w:b/>';
+                        jc = 'center';
+                    } else {
+                        bg = (isTM || isPct) ? 'FFF3CD' : 'FFFFFF';
+                        co = (isTM || isPct) ? '3C0028' : '000000';
+                        bold = '';
+                        jc = isName ? 'left' : 'center';
+                    }
 
-    if (isMarkHeader) {
-        const num = text.substring(1);
-        return '<w:tc>' +
-            '<w:tcPr>' +
-                '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
-                '<w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/>' +
-            '</w:tcPr>' +
-            '<w:p>' +
-                '<w:pPr><w:jc w:val="center"/><w:spacing w:before="0" w:after="0"/></w:pPr>' +
-                '<w:r>' +
-                    '<w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
-                    '<w:t xml:space="preserve">M' + esc(num) + '</w:t>' +
-                '</w:r>' +
-            '</w:p>' +
-        '</w:tc>';
-    }
+                    if (isMarkHeader) {
+                        const num = text.substring(1);
+                        return '<w:tc>' +
+                            '<w:tcPr>' +
+                                '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
+                                '<w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/>' +
+                            '</w:tcPr>' +
+                            '<w:p>' +
+                                '<w:pPr><w:jc w:val="center"/><w:spacing w:before="30" w:after="0" w:line="200" w:lineRule="auto"/></w:pPr>' +
+                                '<w:r>' +
+                                    '<w:rPr><w:sz w:val="11"/><w:szCs w:val="11"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
+                                    '<w:t>M</w:t>' +
+                                '</w:r>' +
+                            '</w:p>' +
+                            '<w:p>' +
+                                '<w:pPr><w:jc w:val="center"/><w:spacing w:before="10" w:after="30" w:line="220" w:lineRule="auto"/></w:pPr>' +
+                                '<w:r>' +
+                                    '<w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
+                                    '<w:t>' + esc(num) + '</w:t>' +
+                                '</w:r>' +
+                            '</w:p>' +
+                        '</w:tc>';
+                    }
 
-    return '<w:tc>' +
-        '<w:tcPr>' +
-            '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
-            '<w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/>' +
-        '</w:tcPr>' +
-        '<w:p>' +
-            '<w:pPr><w:jc w:val="' + jc + '"/><w:spacing w:before="20" w:after="20"/></w:pPr>' +
-            '<w:r>' +
-                '<w:rPr>' + bold + '<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
-                '<w:t xml:space="preserve">' + esc(text) + '</w:t>' +
-            '</w:r>' +
-        '</w:p>' +
-    '</w:tc>';
-}
+                    return '<w:tc>' +
+                        '<w:tcPr>' +
+                            '<w:tcW w:w="' + w + '" w:type="dxa"/>' +
+                            '<w:shd w:val="clear" w:color="auto" w:fill="' + bg + '"/>' +
+                        '</w:tcPr>' +
+                        '<w:p>' +
+                            '<w:pPr><w:jc w:val="' + jc + '"/><w:spacing w:before="20" w:after="20"/></w:pPr>' +
+                            '<w:r>' +
+                                '<w:rPr>' + bold + '<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="' + co + '"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>' +
+                                '<w:t xml:space="preserve">' + esc(text) + '</w:t>' +
+                            '</w:r>' +
+                        '</w:p>' +
+                    '</w:tc>';
+                }
 
-    // ሌሎች cells — ነባል
-    return `<w:tc>` +
-        `<w:tcPr>` +
-            `<w:tcW w:w="${w}" w:type="dxa"/>` +
-            `<w:shd w:val="clear" w:color="auto" w:fill="${bg}"/>` +
-        `</w:tcPr>` +
-        `<w:p>` +
-            `<w:pPr><w:jc w:val="${jc}"/><w:spacing w:before="20" w:after="20"/></w:pPr>` +
-            `<w:r>` +
-                `<w:rPr>${bold}<w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${co}"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr>` +
-                `<w:t xml:space="preserve">${esc(text)}</w:t>` +
-            `</w:r>` +
-        `</w:p>` +
-    `</w:tc>`;
-}
                 const headerRow = headers.map((h, i) => makeCell(h, true, i)).join('');
                 const dataRows = data.map(row => '<w:tr>' + row.map((c, i) => makeCell(c, false, i)).join('') + '</w:tr>').join('');
-                const gridCols = colWidths.map(w => `<w:gridCol w:w="${w}"/>`).join('\n');
+                const gridCols = colWidths.map(w => '<w:gridCol w:w="' + w + '"/>').join('\n');
                 const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 wp14"><w:body><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="200"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="32"/><w:szCs w:val="32"/><w:color w:val="3C0028"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr><w:t>' + esc(docTitle) + '</w:t></w:r></w:p><w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="' + totalW + '" w:type="dxa"/><w:jc w:val="center"/><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:left w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:right w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="999999"/></w:tblBorders><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="40" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="40" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' + gridCols + '</w:tblGrid><w:tr>' + headerRow + '</w:tr>' + dataRows + '</w:tbl><w:sectPr><w:pgSz w:w="' + pw + '" w:h="' + ph + '" w:orient="' + orient + '"/><w:pgMar w:top="' + margin + '" w:right="' + margin + '" w:bottom="' + margin + '" w:left="' + margin + '" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
                 const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
                 const rl = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
@@ -1334,7 +1317,7 @@
                 chv.setUint32(20, content.length, true); chv.setUint32(24, content.length, true);
                 chv.setUint16(28, name.length, true); chv.setUint16(30, 0, true);
                 chv.setUint16(32, 0, true); chv.setUint16(34, 0, true); chv.setUint16(36, 0, true);
-                chv.setUint32(38, 0, true); chv.setUint32(42, off, true);
+                chv.setUint16(38, 0, true); chv.setUint32(42, off, true);
                 cd.push(ch, name); off += 30 + name.length + content.length;
             });
             const cdOff = off; let cdSz = 0; cd.forEach(p => { parts.push(p); cdSz += p.length; });
@@ -1358,7 +1341,7 @@
 
         if ('serviceWorker' in navigator) {
             const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'];
-            const sw = 'const CN="AttendanceApp_v6",U=' + JSON.stringify(urls) + ';self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match("./")))});';
+            const sw = 'const CN="AttendanceApp_v7",U=' + JSON.stringify(urls) + ';self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match("./")))});';
             navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
         }
 
