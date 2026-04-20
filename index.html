@@ -102,6 +102,9 @@
         .history-view-title{color:#fff;font-weight:600}
         .history-view-close{background:none;border:none;color:#aaa;font-size:1.5rem;cursor:pointer}
         .history-table-container{flex:1;overflow:auto}
+        .clear-all-btn{background:none;border:1px solid #b71c1c;color:#ff6b6b;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:8px;transition:all .2s}
+        .clear-all-btn:hover{background:#b71c1c;color:#fff;border-color:#b71c1c}
+        .clear-all-btn:active{transform:scale(.95)}
         .form-title{font-size:1.6rem;margin-bottom:28px;text-align:center;color:#eee}
         .form-group{margin-bottom:20px;position:relative}
         label{display:block;margin-bottom:8px;font-size:.95rem;color:#ccc}
@@ -179,6 +182,7 @@
             .form-container{padding:25px}
             th,td{padding:8px 6px;font-size:.92rem}
             .history-modal-content{width:100%;height:100%;border-radius:0}
+            .clear-all-btn{padding:6px 12px;font-size:.8rem}
         }
     </style>
 </head>
@@ -192,9 +196,9 @@
     </div>
     <div id="history-delete-modal" style="display:none">
         <div class="lock-content">
-            <div class="lock-title">Enter Password</div>
+            <div class="lock-title" id="history-delete-title">Enter Password</div>
             <input type="password" id="history-delete-input" placeholder="------" autofocus>
-            <button id="history-delete-btn">Confirm Delete</button>
+            <button id="history-delete-btn">Confirm</button>
             <div id="history-delete-error">Incorrect Password</div>
         </div>
     </div>
@@ -335,7 +339,7 @@
     <div id="history-modal">
         <div class="history-modal-content">
             <div class="settings-header">
-                <span class="settings-title">Student List History</span>
+                <button class="clear-all-btn" id="clear-all-history-btn"><i class="fa-solid fa-trash-can"></i> Clear All History</button>
                 <button class="settings-close" id="history-close-btn">&times;</button>
             </div>
             <div class="history-list-container" id="history-list-container"></div>
@@ -472,6 +476,7 @@
         const regCamCloseBtn = document.getElementById('reg-cam-close-btn');
         const datePopup = document.getElementById('date-popup');
         const historyDeleteModal = document.getElementById('history-delete-modal');
+        const historyDeleteTitle = document.getElementById('history-delete-title');
         const historyDeleteInput = document.getElementById('history-delete-input');
         const historyDeleteBtn = document.getElementById('history-delete-btn');
         const historyDeleteError = document.getElementById('history-delete-error');
@@ -479,6 +484,7 @@
         let selectedDetailRow = null, pendingDeleteRow = null;
         let afterConfirmAction = null, currentExportType = 'docx';
         let currentHistoryExportId = null, pendingDeleteHistoryId = null;
+        let isClearAllMode = false;
         let unsubscribeRecords = null, unsubscribeHistory = null;
 
         const appLockModal = document.getElementById('app-lock-modal');
@@ -762,7 +768,7 @@
                 const d = document.createElement('div'); d.className = 'history-item';
                 d.innerHTML = `<div class="history-item-info"><span class="history-item-title">${item.title}</span><span class="history-item-date">${new Date(item.date).toLocaleString()}</span><span class="history-item-count">${item.count} Students</span></div><div class="history-item-actions"><button class="history-action-btn h-view" data-key="${key}"><i class="fa-solid fa-eye"></i> View</button><button class="history-action-btn h-download" data-key="${key}"><i class="fa-solid fa-download"></i></button><button class="history-action-btn h-delete" data-key="${key}"><i class="fa-solid fa-trash"></i></button></div>`;
                 d.querySelector('.h-view').addEventListener('click', e => { e.stopPropagation(); viewHistory(key, item); });
-                d.querySelector('.h-delete').addEventListener('click', e => { e.stopPropagation(); pendingDeleteHistoryId = key; historyDeleteInput.value = ''; historyDeleteError.style.display = 'none'; historyDeleteModal.style.display = 'flex'; historyDeleteInput.focus(); });
+                d.querySelector('.h-delete').addEventListener('click', e => { e.stopPropagation(); pendingDeleteHistoryId = key; isClearAllMode = false; historyDeleteTitle.textContent = "Enter Password"; historyDeleteBtn.textContent = "Confirm Delete"; historyDeleteInput.value = ''; historyDeleteError.style.display = 'none'; historyDeleteModal.style.display = 'flex'; historyDeleteInput.focus(); });
                 d.querySelector('.h-download').addEventListener('click', e => { e.stopPropagation(); currentHistoryExportId = key; currentExportType = 'docx'; docPageTitleInput.value = item.title; docFileTitleInput.value = item.title.replace(/[^a-z0-9]/gi, '_'); docPercentFilterInput.value = '0'; document.getElementById('title-popup-header').textContent = "Export " + item.title; document.getElementById('main-export-inputs').style.display = 'none'; titlePopupModal.classList.add('active'); docPercentFilterInput.focus(); });
                 historyListContainer.appendChild(d);
             });
@@ -777,11 +783,34 @@
             h += '</tbody></table>'; historyTableContainer.innerHTML = h; historyViewModal.classList.add('active');
         }
 
+        document.getElementById('clear-all-history-btn').addEventListener('click', () => {
+            vibrate(30);
+            const hasItems = historyListContainer.querySelector('.history-item');
+            if (!hasItems) { showToast("No history to clear"); return; }
+            isClearAllMode = true;
+            pendingDeleteHistoryId = null;
+            historyDeleteTitle.textContent = "Clear All History";
+            historyDeleteBtn.textContent = "Clear All";
+            historyDeleteInput.value = '';
+            historyDeleteError.style.display = 'none';
+            historyDeleteModal.style.display = 'flex';
+            historyDeleteInput.focus();
+        });
+
         historyDeleteBtn.addEventListener('click', async () => {
             vibrate(30);
             if (historyDeleteInput.value === 'Debebe!') {
                 historyDeleteModal.style.display = 'none';
-                if (pendingDeleteHistoryId) {
+                if (isClearAllMode) {
+                    isClearAllMode = false;
+                    localStorage.setItem('attendance_history', '[]');
+                    localStorage.setItem('attendance_pending_history', '[]');
+                    localStorage.setItem('att_pending_hist_del', '[]');
+                    if (navigator.onLine && fbReady) {
+                        try { await fb.remove(fb.historyRef); showToast("All history cleared"); }
+                        catch(e) { showToast("Error clearing"); }
+                    } else { renderHistory({}); showToast("All history cleared"); }
+                } else if (pendingDeleteHistoryId) {
                     if (navigator.onLine && fbReady) {
                         try { await fb.remove(fbRef(`history/${pendingDeleteHistoryId}`)); showToast("History deleted"); } catch(e) { showToast("Error deleting"); }
                     } else {
@@ -796,7 +825,7 @@
             } else { historyDeleteError.style.display = 'block'; historyDeleteInput.value = ''; historyDeleteInput.focus(); }
         });
         historyDeleteInput.addEventListener('keyup', e => { if (e.key === 'Enter') historyDeleteBtn.click(); });
-        historyDeleteModal.addEventListener('click', e => { if (e.target === historyDeleteModal) historyDeleteModal.style.display = 'none'; });
+        historyDeleteModal.addEventListener('click', e => { if (e.target === historyDeleteModal) { historyDeleteModal.style.display = 'none'; isClearAllMode = false; } });
 
         moveHistoryBtn.addEventListener('click', () => {
             vibrate(30);
@@ -1327,7 +1356,7 @@
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 [listOverlay, formModal, regContextMenu, exportContextMenu, detailPopup, titlePopupModal, archiveTitleModal, settingsPanel, historyModal, historyViewModal].forEach(m => m.classList.remove('active'));
-                closeCam(); closeRegCam(); historyDeleteModal.style.display = 'none';
+                closeCam(); closeRegCam(); historyDeleteModal.style.display = 'none'; isClearAllMode = false;
                 if (confirmModal.classList.contains('active')) hideConfirm();
             }
         });
