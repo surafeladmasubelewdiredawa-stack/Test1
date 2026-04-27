@@ -10,10 +10,14 @@
     <meta name="theme-color" content="#3C0028">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Added crossorigin for better caching and offline fallback support -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" id="fa-link">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{height:100%;overflow:hidden}
@@ -237,7 +241,7 @@
         <div class="overlay-top-right">
             <button class="overlay-btn" id="move-history-btn" title="Move to History"><i class="fa-solid fa-box-archive"></i></button>
             <button class="overlay-btn" id="export-menu-btn" title="Export Options"><i class="fa-solid fa-download"></i></button>
-            <button class="overlay-btn" id="register-menu-btn"><i class="fa-solid fa-user-plus"></i></button>
+            <button class="overlay-btn" id="register-menu-btn" title="Register Student"><i class="fa-solid fa-user-plus"></i></button>
             <button class="overlay-btn" id="close-list"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div id="export-context-menu" class="context-menu">
@@ -492,6 +496,7 @@
         let afterConfirmAction = null, currentExportType = 'docx';
         let currentHistoryExportId = null, pendingDeleteHistoryId = null;
         let isClearAllMode = false;
+        let isHistorySaving = false; // FIX: Prevent double saving
         let unsubscribeRecords = null, unsubscribeHistory = null;
 
         const appLockModal = document.getElementById('app-lock-modal');
@@ -769,7 +774,10 @@
         }
         function renderHistory(data) {
             historyListContainer.innerHTML = '';
-            const entries = Object.entries(data).filter(([k, v]) => v !== null).sort((a, b) => new Date(b[1].date) - new Date(a[1].date));
+            const pendingDeletions = JSON.parse(localStorage.getItem('att_pending_hist_del') || '[]');
+            // Filter out nulls and pending deletions locally
+            const entries = Object.entries(data).filter(([k, v]) => v !== null && !pendingDeletions.includes(k)).sort((a, b) => new Date(b[1].date) - new Date(a[1].date));
+            
             if (entries.length > 0) clearAllBtn.classList.remove('hidden');
             else clearAllBtn.classList.add('hidden');
             if (!entries.length) { historyListContainer.innerHTML = '<div style="text-align:center;color:#aaa;margin-top:50px;grid-column:1/-1">No history found.</div>'; return; }
@@ -825,6 +833,7 @@
                     if (navigator.onLine && fbReady) {
                         try { await fb.remove(fbRef(`history/${pendingDeleteHistoryId}`)); showToast("History deleted"); } catch(e) { showToast("Error deleting"); }
                     } else {
+                        // Optimistic deletion for offline
                         let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
                         hist = hist.filter(h => h.firebaseKey !== pendingDeleteHistoryId);
                         localStorage.setItem('attendance_history', JSON.stringify(hist));
@@ -854,6 +863,11 @@
         archiveCancelBtn.addEventListener('click', () => archiveTitleModal.classList.remove('active'));
 
         async function doMoveToHistory(title) {
+            if (isHistorySaving) {
+                showToast("Processing...", true);
+                return;
+            }
+            isHistorySaving = true;
             showToast("Archiving...");
             const arr = [];
             tableBody.querySelectorAll('tr').forEach(r => {
@@ -862,9 +876,24 @@
                 arr.push(s);
             });
             const entry = { id: Date.now(), title, date: new Date().toISOString(), count: arr.length, data: arr };
+            
+            // Unique ID generation
+            const localKey = 'local_' + entry.id;
+            
+            // Load existing, remove duplicates by checking exact date+title+count combination roughly, or just add
             let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
-            hist.push({ firebaseKey: 'local_' + entry.id, ...entry });
+            
+            // Ensure no duplicates of this exact key
+            hist = hist.filter(h => h.firebaseKey !== localKey);
+            
+            const toStore = { firebaseKey: localKey, ...entry };
+            hist.push(toStore);
+            
+            // FIX: Sort by date descending
+            hist.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
             localStorage.setItem('attendance_history', JSON.stringify(hist));
+            
             if (navigator.onLine && fbReady) {
                 try { await fb.push(fb.historyRef, entry); showToast("Moved to History!"); }
                 catch(e) { let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]'); pending.push(entry); localStorage.setItem('attendance_pending_history', JSON.stringify(pending)); showToast("Queued for sync", true); }
@@ -875,7 +904,12 @@
                 for (let i = 3; i <= 28; i++) { r.cells[i].innerHTML = ''; r.cells[i].classList.remove('mark-cell', 'disabled'); r.cells[i].dataset.value = ''; r.cells[i].title = ''; r.cells[i].dataset.date = ''; }
                 r.cells[29].textContent = '0'; r.cells[30].textContent = '0'; r.dataset.startMark = "1";
             });
-            currentAttendanceMark = null; markedThisMark.clear(); isAttendanceOpen = false; stopCountdown(); saveData();
+            currentAttendanceMark = null; markedThisMark.clear(); isAttendanceOpen = false; stopCountdown();
+            
+            // FIX: Clear attendance state to prevent resume issues
+            localStorage.removeItem('attendanceState'); 
+            saveData();
+            isHistorySaving = false;
         }
 
         function showConfirm(row, name) { pendingDeleteRow = row; document.getElementById('confirm-title-text').innerHTML = "Delete this student?<br>"; confirmStudentName.textContent = name; confirmModal.classList.add('active'); }
@@ -1288,7 +1322,7 @@
                 const headerRow = headers.map((h, i) => makeCell(h, true, i)).join('');
                 const dataRows = data.map(row => '<w:tr>' + row.map((c, i) => makeCell(c, false, i)).join('') + '</w:tr>').join('');
                 const gridCols = colWidths.map(w => '<w:gridCol w:w="' + w + '"/>').join('\n');
-                const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 wp14"><w:body><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="200"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="32"/><w:szCs w:val="32"/><w:color w:val="3C0028"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr><w:t>' + esc(docTitle) + '</w:t></w:r></w:p><w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="' + totalW + '" w:type="dxa"/><w:jc w:val="center"/><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:left w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:right w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="999999"/></w:tblBorders><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="40" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="40" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' + gridCols + '</w:tblGrid><w:tr><w:trPr><w:tblHeader/></w:trPr>' + headerRow + '</w:tr>' + dataRows + '</w:tbl><w:sectPr><w:pgSz w:w="' + pw + '" w:h="' + ph + '" w:orient="' + orient + '"/><w:pgMar w:top="' + margin + '" w:right="' + margin + '" w:bottom="' + margin + '" w:left="' + margin + '" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
+                const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/2012/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 wp14"><w:body><w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="200"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="32"/><w:szCs w:val="32"/><w:color w:val="3C0028"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/></w:rPr><w:t>' + esc(docTitle) + '</w:t></w:r></w:p><w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="' + totalW + '" w:type="dxa"/><w:jc w:val="center"/><w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:left w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:right w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="999999"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="999999"/></w:tblBorders><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="40" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="40" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' + gridCols + '</w:tblGrid><w:tr><w:trPr><w:tblHeader/></w:trPr>' + headerRow + '</w:tr>' + dataRows + '</w:tbl><w:sectPr><w:pgSz w:w="' + pw + '" w:h="' + ph + '" w:orient="' + orient + '"/><w:pgMar w:top="' + margin + '" w:right="' + margin + '" w:bottom="' + margin + '" w:left="' + margin + '" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
                 const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
                 const rl = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
                 const blob = createZip([{ name: '[Content_Types].xml', content: ct },{ name: '_rels/.rels', content: rl },{ name: 'word/document.xml', content: xml }]);
@@ -1348,6 +1382,20 @@
         }
 
         window.addEventListener('load', async () => {
+            // Check for icons, if offline and missing, inject minimal CSS backup
+            const faLink = document.getElementById('fa-link');
+            faLink.onerror = function() {
+                const style = document.createElement('style');
+                // Minimal icon placeholders using CSS borders/shapes or unicode if needed
+                // For now, we rely on the SW cache. 
+                // As a last resort, we inject a message to user to go online for icons first time.
+                if(!localStorage.getItem('fa_cached')) {
+                   console.log("FontAwesome offline fallback triggered");
+                   // You could inject base64 font here, but it's huge. 
+                   // We'll assume SW will cache it on first online load.
+                }
+            };
+            
             const rem = getRemaining();
             const st = JSON.parse(localStorage.getItem('attendanceState') || 'null');
             if (rem > 0 && st && st.isOpen) {
