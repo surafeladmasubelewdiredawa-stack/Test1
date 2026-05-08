@@ -19,7 +19,8 @@
         html,body{height:100%;overflow:hidden}
         body{background:#000;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#fff;position:relative}
         body::before{content:'';position:fixed;inset:0;z-index:-2;
-            background-image:url('Bg.image');
+            /* FIX: Path updated for Android assets folder */
+            background-image:url('file:///android_asset/Bg.image');
             background-size:cover;background-position:center;background-repeat:no-repeat;
             filter:blur(9px) brightness(1.0);transform:scale(1.1)}
         body::after{content:'';position:fixed;inset:0;z-index:-1;}
@@ -384,7 +385,7 @@
         };
 
         let fb = null, fbReady = false;
-        let isProcessingMove = false; // Prevents double clicks
+        let isProcessingMove = false;
 
         async function loadFirebase() {
             try {
@@ -730,19 +731,15 @@
         async function syncHistoryToFirebase() {
             if (!fbReady || !navigator.onLine) return;
             let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
-            
-            // Strict Deduplication of Queue
             const seen = new Set();
             pending = pending.filter(p => {
                 if (seen.has(p.id)) return false;
                 seen.add(p.id);
                 return true;
             });
-
             if (pending.length > 0) {
                 const syncedIds = [];
                 try {
-                    // Process one by one to ensure safety
                     const syncPromises = pending.map(async (entry) => {
                         try {
                             await fb.push(fb.historyRef, entry);
@@ -752,8 +749,6 @@
                         }
                     });
                     await Promise.all(syncPromises);
-                    
-                    // Remove only successfully synced items from queue
                     const remaining = pending.filter(p => !syncedIds.includes(p.id));
                     localStorage.setItem('attendance_pending_history', JSON.stringify(remaining));
                 } catch (e) {
@@ -764,7 +759,6 @@
         function loadHistoryFromLocalStorage() {
             try {
                 let arr = JSON.parse(localStorage.getItem('attendance_history') || '[]');
-                // Remove duplicates from array
                 const cleanArr = [];
                 const seen = new Set();
                 arr.forEach(h => {
@@ -899,17 +893,13 @@
                 return;
             }
             isProcessingMove = true;
-
             try {
-                // 1. Collect Data
                 const arr = [];
                 tableBody.querySelectorAll('tr').forEach(r => {
                     const s = { name: r.cells[1].textContent, gender: r.cells[2].textContent, marks: [], total: r.cells[29].textContent, percent: r.cells[30].textContent, church: r.dataset.church, christ: r.dataset.christ, phone: r.dataset.phone };
                     for (let i = 1; i <= 26; i++) s.marks.push(r.cells[2+i].textContent.trim());
                     arr.push(s);
                 });
-
-                // 2. Generate a unique ID for this specific move operation
                 const entryId = Date.now().toString();
                 const entry = { 
                     id: entryId, 
@@ -919,54 +909,37 @@
                     data: arr 
                 };
                 const localKey = 'local_' + entryId;
-
-                // 3. Check against Local History (Prevents "Duplicate Move" offline)
                 let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
                 if (hist.some(h => h.firebaseKey === localKey)) {
                     showToast("Already moved recently!");
                     return;
                 }
-                // Also check for duplicate ID in case the key format changes or logic shifts
                 if (hist.some(h => h.id === entryId)) {
                     showToast("Already in history.");
                     return;
                 }
-
-                // 4. Check against Pending Sync (Prevents "Double Push" offline)
                 let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
                 if (pending.some(p => p.id === entryId)) {
                     showToast("Already in queue.");
                     return;
                 }
-
-                // 5. Save to Local History (Immediate visibility)
                 hist.push({ firebaseKey: localKey, ...entry });
                 localStorage.setItem('attendance_history', JSON.stringify(hist));
-
-                // 6. Save to Pending Sync (For when we go online)
-                // Ensure pending array doesn't have duplicates before adding new one
                 pending = [...new Set(pending.map(p => p.id))].map(id => pending.find(p => p.id === id));
                 pending.push(entry); 
                 localStorage.setItem('attendance_pending_history', JSON.stringify(pending));
-
                 showToast("Archiving...");
-
-                // 7. Sync to Cloud if Online
                 if (navigator.onLine && fbReady) {
                     try { await fb.push(fb.historyRef, entry); showToast("Moved to History!"); }
                     catch(e) { showToast("Queued for sync", true); }
                 } else {
                     showToast("Queued for sync", true);
                 }
-
-                // 8. Reset Table
                 tableBody.querySelectorAll('tr').forEach(r => {
                     for (let i = 3; i <= 28; i++) { r.cells[i].innerHTML = ''; r.cells[i].classList.remove('mark-cell', 'disabled'); r.cells[i].dataset.value = ''; r.cells[i].title = ''; r.cells[i].dataset.date = ''; }
                     r.cells[29].textContent = '0'; r.cells[30].textContent = '0'; r.dataset.startMark = "1";
                 });
                 currentAttendanceMark = null; markedThisMark.clear(); isAttendanceOpen = false; stopCountdown(); saveData();
-                
-                // 9. Update UI
                 loadHistoryFromLocalStorage();
             } finally {
                 isProcessingMove = false;
@@ -1122,19 +1095,40 @@
         });
         document.querySelector('.table-container').addEventListener('scroll', () => datePopup.style.display = 'none');
 
+        // ★★★ FIX: ATTENDANCE CAMERA FUNCTION ★★★
         toggleScanBtn.addEventListener('click', function () { vibrate(30); animateButton(this); if (cameraModal.classList.contains('active')) closeCam(); else { isAttendanceScan = true; openCam(); } });
         fileBtn.addEventListener('click', function () { vibrate(30); animateButton(this); isAttendanceScan = true; qrHiddenInput.click(); });
+        
         async function openCam() {
             cameraModal.classList.add('active'); toggleScanBtn.classList.add('camera-running');
             toggleScanBtn.innerHTML = iconStop; toggleScanBtn.title = "Stop Camera";
-            try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); cameraFeed.srcObject = videoStream; scanCam(); }
-            catch(e) { showToast("Camera error"); closeCam(); }
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showToast("Camera not supported in this browser", true); closeCam(); return;
+                }
+                let stream = null;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } });
+                } catch (e1) {
+                    try { stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } } }); }
+                    catch (e2) { throw e2; }
+                }
+                videoStream = stream; cameraFeed.srcObject = stream;
+                await cameraFeed.play(); scanCam();
+            } catch (e) {
+                if (e.name === 'NotAllowedError') showToast("Camera permission denied", true);
+                else if (e.name === 'NotFoundError') showToast("No camera found", true);
+                else if (e.name === 'NotReadableError') showToast("Camera in use by another app", true);
+                else showToast("Camera error: " + e.message, true);
+                closeCam();
+            }
         }
         function closeCam() {
             if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
             cameraModal.classList.remove('active'); toggleScanBtn.classList.remove('camera-running');
             toggleScanBtn.innerHTML = iconExpand; toggleScanBtn.title = "Open Camera";
         }
+        
         let camInterval = null;
         function scanCam() {
             if (camInterval) clearInterval(camInterval);
@@ -1150,16 +1144,36 @@
                 }
             }, 500);
         }
+
+        // ★★★ FIX: REGISTRATION CAMERA FUNCTION ★★★
         async function openRegCam() {
             regCameraModal.classList.add('active');
-            try { regVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); regCameraFeed.srcObject = regVideoStream; scanRegCam(); }
-            catch(e) { showToast("Camera error"); closeRegCam(); }
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showToast("Camera not supported", true); closeRegCam(); return;
+                }
+                let stream = null;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } });
+                } catch (e1) {
+                    try { stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } } }); }
+                    catch (e2) { throw e2; }
+                }
+                regVideoStream = stream; regCameraFeed.srcObject = stream;
+                await regCameraFeed.play(); scanRegCam();
+            } catch (e) {
+                if (e.name === 'NotAllowedError') showToast("Camera permission denied", true);
+                else if (e.name === 'NotFoundError') showToast("No camera found", true);
+                else showToast("Camera error: " + e.message, true);
+                closeRegCam();
+            }
         }
         function closeRegCam() {
             if (regVideoStream) { regVideoStream.getTracks().forEach(t => t.stop()); regVideoStream = null; }
             regCameraModal.classList.remove('active');
         }
         regCamCloseBtn.addEventListener('click', closeRegCam);
+        
         let regCamInterval = null;
         function scanRegCam() {
             if (regCamInterval) clearInterval(regCamInterval);
@@ -1209,8 +1223,8 @@
                 if (si > -1) { if (!d.first) d.first = d.fullName.substring(0, si).trim(); if (!d.last) d.last = d.fullName.substring(si + 1).trim(); }
                 else { if (!d.first) d.first = d.fullName; }
             }
-            if (!d.first && parts.length >= 4) { d.church = d.church || parts[0]||''; d.christ = d.christ || parts[1]||''; d.first = parts[2]||''; d.last = parts[3]||''; d.gender = d.gender || parts[4]||''; d.phone = d.phone || parts[5]||''; }
             if (!d.first && !d.last && !d.church && !d.phone && parts.length <= 3) { const nt = text.trim(); const si = nt.indexOf(' '); if (si > -1) { d.first = nt.substring(0, si).trim(); d.last = nt.substring(si + 1).trim(); } else if (nt) d.first = nt; }
+            if (!d.first && !d.last && !d.church && !d.phone && parts.length >= 4) { d.church = d.church || parts[0]||''; d.christ = d.christ || parts[1]||''; d.first = parts[2]||''; d.last = parts[3]||''; d.gender = d.gender || parts[4]||''; d.phone = d.phone || parts[5]||''; }
             if (d.gender) { const g = d.gender.toLowerCase(); d.gender = (g.includes('male') || g === 'm') ? 'Male' : (g.includes('female') || g === 'f') ? 'Female' : ''; }
             return d;
         }
