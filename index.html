@@ -184,7 +184,7 @@
             .center .btn{width:90px;height:90px;font-size:38px}
             .overlay-btn{width:45px;height:45px;font-size:16px}
             .top-right .btn{width:45px;height:45px;font-size:18px}
-            .countdown{width:70px;height:70px;font-size:32px}
+            .countdown{width:auto;min-width:70px;font-size:32px}
             .table-container{padding:0 6px}
             .form-container{padding:25px}
             th,td{padding:8px 6px;font-size:.92rem}
@@ -211,7 +211,7 @@
     </div>
     <div id="sync-badge" class="sync-badge"><i class="fa-solid fa-rotate"></i> Syncing...</div>
     <div class="top-left">
-        <div id="countdown-timer" class="countdown"><span id="countdown-number">20</span></div>
+        <div id="countdown-timer" class="countdown"><span id="countdown-number">2:00:00</span></div>
     </div>
     <div class="top-right">
         <button class="btn" id="list-btn"><i class="fa-solid fa-list"></i></button>
@@ -590,6 +590,12 @@
             rows.sort((a, b) => a.cells[1].textContent.trim().toLowerCase().localeCompare(b.cells[1].textContent.trim().toLowerCase()));
             rows.forEach(r => tableBody.appendChild(r)); updateRowNumbers();
         }
+        function formatTime(sec) {
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            const s = sec % 60;
+            return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
         function markNextAvailableMark(row) {
             if (!row) return;
             let tm;
@@ -599,8 +605,8 @@
             const cell = row.cells[2+tm];
             if (!cell) return;
             if (!cell.dataset.value) {
-                const tl = parseInt(countdownNumber.textContent);
-                const sc = tl > 15 ? 4 : tl > 10 ? 3 : tl > 5 ? 2 : 1;
+                const tl = getRemaining();
+                const sc = tl > 5400 ? 4 : tl > 3600 ? 3 : tl > 1800 ? 2 : 1; // >1.5h=4, >1h=3, >30m=2, else 1
                 setMarkDisplay(cell, sc); cell.title = `Mark ${tm}: Score ${sc}`;
                 cell.classList.add('mark-cell'); cell.classList.remove('disabled');
                 showToast(`Mark ${tm}: Score ${sc}`, true); vibrate(300);
@@ -624,12 +630,12 @@
         function startCountdown(resumed) {
             if (countdownInterval || isAttendanceOpen) return;
             isAttendanceOpen = true;
-            saveCountdownEnd(Date.now() + ((resumed != null ? resumed : 20) * 1000));
-            let tl = getRemaining(); countdownNumber.textContent = tl;
+            saveCountdownEnd(Date.now() + ((resumed != null ? resumed : 7200) * 1000)); // 2 hours = 7200 seconds
+            let tl = getRemaining(); countdownNumber.textContent = formatTime(tl);
             countdownEl.classList.add('active'); countdownEl.classList.remove('warning');
             countdownInterval = setInterval(() => {
-                tl = getRemaining(); countdownNumber.textContent = tl;
-                if (tl <= 5) countdownEl.classList.add('warning');
+                tl = getRemaining(); countdownNumber.textContent = formatTime(tl);
+                if (tl <= 300) countdownEl.classList.add('warning'); // Warns at 5 minutes left
                 if (tl <= 0) { stopCountdown(); showToast(`Mark ${currentAttendanceMark} ended`, true); markAbsentAfterTimeout(); markedThisMark.clear(); saveData(); }
             }, 1000);
         }
@@ -1461,7 +1467,7 @@
             if (rem > 0 && st && st.isOpen) {
                 isAttendanceOpen = false; currentAttendanceMark = st.currentMark;
                 markedThisMark = new Set(st.markedSet || []);
-                startCountdown(rem); showToast(`Resumed: ${rem}s`, true);
+                startCountdown(rem); showToast(`Resumed: ${formatTime(rem)}`, true);
             } else if (rem <= 0 && st && st.isOpen) {
                 currentAttendanceMark = st.currentMark; markedThisMark = new Set(st.markedSet || []);
                 markAbsentAfterTimeout(); clearCountdownEnd();
