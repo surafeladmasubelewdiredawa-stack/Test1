@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Attendance System for sunday</title>
+    <title>Attendance System for friday</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <link rel="manifest" id="app-manifest">
@@ -17,8 +17,9 @@
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{height:100%;overflow:hidden}
-        body{background:#000;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#fff;position:relative }
+        body{background:#000;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#fff;position:relative}
         body::before{content:'';position:fixed;inset:0;z-index:-2;
+            /* FIX: Path updated for Android assets folder */
             background-image:url('Bg.image');
             background-size:cover;background-position:center;background-repeat:no-repeat;
             filter:blur(9px) brightness(1.0);transform:scale(1.1)}
@@ -61,9 +62,6 @@
         th:nth-child(31){background:#3C0028!important;color:#E6B800;border-left:2px solid #333}
         th:nth-child(31),td:nth-child(31){width:80px}
         td:nth-child(31){background:#0f0f0f;color:#00ff9d;font-weight:bold;border-left:2px solid #333}
-        th:nth-child(32){background:#3C0028!important;color:#E6B800;border-left:2px solid #333}
-        th:nth-child(32),td:nth-child(32){width:80px}
-        td:nth-child(32){background:#0f0f0f;color:#00ff9d;font-weight:bold;border-left:2px solid #333}
         th:nth-child(2),td:nth-child(2){position:sticky;left:0;background-color:#080808;z-index:100;border-right:2px solid #444}
         th:nth-child(2){background-color:#3C0028!important;z-index:150}
         tr:hover{background:rgba(255,255,255,.05)}
@@ -139,8 +137,6 @@
         .popup-actions{margin-top:24px;display:flex;gap:12px}
         .popup-actions button{flex:1;padding:12px;font-size:1rem;border:none;border-radius:8px;cursor:pointer;transition:all .2s;font-weight:600}
         .popup-actions .delete-btn{background:#b71c1c;color:#fff}.popup-actions .delete-btn:hover{filter:brightness(1.15)}
-        .popup-actions .paid-btn{background:#2e7d32;color:#fff}.popup-actions .paid-btn:hover{filter:brightness(1.15)}
-        .popup-actions .unpaid-btn{background:#b71c1c;color:#fff}.popup-actions .unpaid-btn:hover{filter:brightness(1.15)}
         .confirm-content{padding:24px 28px;max-width:380px;text-align:center}
         .confirm-title{font-size:1.2rem;color:#eee;margin-bottom:18px;line-height:1.4}
         .confirm-name{color:#E6B800;font-weight:600;word-break:break-word}
@@ -183,10 +179,6 @@
         #lock-btn:active,#history-delete-btn:active{background:#c49a00;transform:scale(.98)}
         #lock-error,#history-delete-error{color:#ff4d4d;margin-top:15px;font-size:.9rem;display:none}
         #date-popup{position:fixed;background:#1a1a1a;border:1px solid #E6B800;border-radius:8px;padding:8px 12px;color:#fff;font-size:.85rem;z-index:1000;box-shadow:0 4px 10px rgba(0,0,0,.5);display:none;pointer-events:none}
-        .payment-filter-group{display:flex;gap:8px;margin-top:8px;margin-bottom:16px}
-        .payment-filter-btn{flex:1;padding:8px;border-radius:6px;border:1px solid #333;background:#222;color:#aaa;font-size:.85rem;cursor:pointer;transition:all .2s;font-weight:600}
-        .payment-filter-btn:hover{background:#2a2a2a;color:#fff}
-        .payment-filter-btn.active{background:#444;color:#fff;border-color:#666}
         @media(max-width:600px){
             .center{gap:80px}
             .center .btn{width:90px;height:90px;font-size:38px}
@@ -263,7 +255,7 @@
                     <th>#</th><th>Full Name</th><th>Gender</th>
                     <th>M1</th><th>M2</th><th>M3</th><th>M4</th><th>M5</th><th>M6</th><th>M7</th><th>M8</th><th>M9</th><th>M10</th>
                     <th>M11</th><th>M12</th><th>M13</th><th>M14</th><th>M15</th><th>M16</th><th>M17</th><th>M18</th><th>M19</th><th>M20</th><th>M21</th><th>M22</th><th>M23</th><th>M24</th><th>M25</th><th>M26</th>
-                    <th>TM</th><th>%</th><th>P</th>
+                    <th>TM</th><th>%</th>
                 </tr></thead>
                 <tbody id="student-table-body"></tbody>
             </table>
@@ -309,7 +301,6 @@
             <div class="popup-field"><span class="popup-label">Time</span><div class="popup-value" id="detail-time"></div></div>
             <div class="popup-actions">
                 <button type="button" id="popup-delete-btn" class="delete-btn">Delete</button>
-                <button type="button" id="popup-paid-btn" class="paid-btn">Paid</button>
             </div>
         </div>
     </div>
@@ -336,11 +327,6 @@
                 </div>
             </div>
             <input type="number" id="doc-percent-filter" placeholder="Min Percentage (e.g. 50)" value="0" min="0" max="100">
-            <div class="payment-filter-group" id="payment-filter-btns">
-                <button type="button" class="payment-filter-btn active" data-filter="all">All</button>
-                <button type="button" class="payment-filter-btn" data-filter="P">Paid</button>
-                <button type="button" class="payment-filter-btn" data-filter="U">Unpaid</button>
-            </div>
             <div class="title-popup-btns">
                 <button class="title-cancel-btn" id="title-cancel-btn">Cancel</button>
                 <button class="title-download-btn" id="title-download-btn">Download</button>
@@ -387,15 +373,16 @@
     <div id="toast" class="toast">Action Successful</div>
 
     <script type="module">
+        // UPDATED FIREBASE CONFIGURATION
         const firebaseConfig = {
-            apiKey: "AIzaSyCDhtyvb1nQSd2wdXWG3vvC9WL01QwlQk8",
-            authDomain: "attendance-system-14d2b.firebaseapp.com",
-            databaseURL: "https://attendance-system-14d2b-default-rtdb.firebaseio.com",
-            projectId: "attendance-system-14d2b",
-            storageBucket: "attendance-system-14d2b.firebasestorage.app",
-            messagingSenderId: "767051801951",
-            appId: "1:767051801951:web:84732e5d5060244d1cc2ea",
-            measurementId: "G-LJW36WPZJ4"
+            apiKey: "AIzaSyAJw5lk3s8FhsxhW58oUawQM6yxNv6H4Jg",
+            authDomain: "attendance-system-2-549b6.firebaseapp.com",
+            databaseURL: "https://attendance-system-2-549b6-default-rtdb.firebaseio.com",
+            projectId: "attendance-system-2-549b6",
+            storageBucket: "attendance-system-2-549b6.firebasestorage.app",
+            messagingSenderId: "690265990079",
+            appId: "1:690265990079:web:cb16adb4502fae1931b70a",
+            measurementId: "G-B0QY1JWMZD"
         };
 
         let fb = null, fbReady = false;
@@ -423,10 +410,11 @@
 
         function fbRef(path) { return fbReady ? fb.ref(fb.db, path) : null; }
 
-        let localVersion = parseInt(localStorage.getItem('att_v') || '0');
+        // FIX: Updated LocalStorage Keys to prevent cross-app data sharing
+        let localVersion = parseInt(localStorage.getItem('att_v_friday') || '0');
         function bumpVersion() {
-            localVersion = parseInt(localStorage.getItem('att_v') || '0') + 1;
-            localStorage.setItem('att_v', String(localVersion));
+            localVersion = parseInt(localStorage.getItem('att_v_friday') || '0') + 1;
+            localStorage.setItem('att_v_friday', String(localVersion));
         }
 
         const syncBadge = document.getElementById('sync-badge');
@@ -531,8 +519,7 @@
                 fullname: row.dataset.fullname || '', phone: row.dataset.phone || '',
                 date: row.dataset.date || '', time: row.dataset.time || '',
                 startMark: row.dataset.startMark || 1, marks,
-                total: row.cells[29].textContent, percent: row.cells[30].textContent,
-                payment: row.cells[31].textContent
+                total: row.cells[29].textContent, percent: row.cells[30].textContent
             };
         }
 
@@ -549,8 +536,7 @@
                     mh += `<td data-value="${m.value||''}" title="${m.title||''}" data-date="${m.date||''}">${m.html||''}</td>`;
                 });
                 for (let i = (s.marks||[]).length; i < 26; i++) mh += '<td></td>';
-                const paymentStatus = s.payment || 'U';
-                row.innerHTML = `<td>${c}</td><td>${s.name}</td><td>${s.gender}</td>${mh}<td>${s.total}</td><td>${s.percent}</td><td>${paymentStatus}</td>`;
+                row.innerHTML = `<td>${c}</td><td>${s.name}</td><td>${s.gender}</td>${mh}<td>${s.total}</td><td>${s.percent}</td>`;
                 row.dataset.id = key; row.dataset.church = s.church||'';
                 row.dataset.christ = s.christ||''; row.dataset.fullname = s.fullname||'';
                 row.dataset.gender = s.gender||''; row.dataset.phone = s.phone||'';
@@ -572,12 +558,6 @@
             const mx = getCurrentMaxAttendanceMark() * 4;
             row.cells[30].textContent = mx > 0 ? ((t / mx) * 100).toFixed(1) : '0';
             row.cells[30].style.color = '#00ff9d';
-            if (row.cells[31].textContent === 'P') {
-                row.cells[31].style.color = '#00ff9d';
-            } else {
-                row.cells[31].textContent = 'U';
-                row.cells[31].style.color = '#ff4d4d';
-            }
         }
         function getCurrentMaxAttendanceMark() {
             let mx = 0;
@@ -642,10 +622,10 @@
             for (let i = 0; i < 20; i++) r += chars[c[i] % chars.length]; return r;
         }
 
-        function saveCountdownEnd(end) { localStorage.setItem('countdownEndTime', end); }
-        function clearCountdownEnd() { localStorage.removeItem('countdownEndTime'); }
+        function saveCountdownEnd(end) { localStorage.setItem('countdownEndTime_friday', end); }
+        function clearCountdownEnd() { localStorage.removeItem('countdownEndTime_friday'); }
         function getRemaining() {
-            const e = localStorage.getItem('countdownEndTime');
+            const e = localStorage.getItem('countdownEndTime_friday');
             if (!e) return 0;
             const d = Math.floor((parseInt(e) - Date.now()) / 1000); return d > 0 ? d : 0;
         }
@@ -686,11 +666,11 @@
         }
         function saveAttState() {
             if (isAttendanceOpen && currentAttendanceMark)
-                localStorage.setItem('attendanceState', JSON.stringify({ isOpen: true, currentMark: currentAttendanceMark, markedSet: Array.from(markedThisMark) }));
+                localStorage.setItem('attendanceState_friday', JSON.stringify({ isOpen: true, currentMark: currentAttendanceMark, markedSet: Array.from(markedThisMark) }));
         }
         function loadFromLocalStorage() {
             try {
-                const saved = JSON.parse(localStorage.getItem('attendance_students') || '{}');
+                const saved = JSON.parse(localStorage.getItem('attendance_students_friday') || '{}');
                 if (Object.keys(saved).length > 0) populateTable(saved); else tableBody.innerHTML = '';
             } catch(e) { tableBody.innerHTML = ''; }
         }
@@ -707,9 +687,9 @@
                 const clean = {};
                 for (const [k, v] of Object.entries(data)) { if (v !== null) clean[k] = v; }
                 populateTable(clean);
-                localStorage.setItem('attendance_students', JSON.stringify(clean));
-                localVersion = fbV; localStorage.setItem('att_v', String(fbV));
-                localStorage.setItem('attendance_deleted', '[]');
+                localStorage.setItem('attendance_students_friday', JSON.stringify(clean));
+                localVersion = fbV; localStorage.setItem('att_v_friday', String(fbV));
+                localStorage.setItem('attendance_deleted_friday', '[]');
             }, (err) => { console.error("Firebase read error:", err); });
         }
 
@@ -718,13 +698,13 @@
             const data = {};
             rows.forEach(r => { const k = r.dataset.id; if (k) data[k] = buildStudentObj(r); });
             bumpVersion();
-            localStorage.setItem('attendance_students', JSON.stringify(data));
+            localStorage.setItem('attendance_students_friday', JSON.stringify(data));
             saveAttState();
             if (navigator.onLine && fbReady) {
                 const pushData = { ...data, _v: localVersion };
-                const deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
+                const deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted_friday') || '[]');
                 deletedKeys.forEach(k => { pushData[k] = null; });
-                fb.update(fb.recordsRef, pushData).then(() => { localStorage.setItem('attendance_deleted', '[]'); }).catch(err => console.error("Firebase save error:", err));
+                fb.update(fb.recordsRef, pushData).then(() => { localStorage.setItem('attendance_deleted_friday', '[]'); }).catch(err => console.error("Firebase save error:", err));
             }
         }
 
@@ -739,16 +719,16 @@
                     const clean = {};
                     for (const [k, v] of Object.entries(fbData)) { if (v !== null) clean[k] = v; }
                     populateTable(clean);
-                    localStorage.setItem('attendance_students', JSON.stringify(clean));
-                    localVersion = fbV; localStorage.setItem('att_v', String(fbV));
-                    localStorage.setItem('attendance_deleted', '[]');
+                    localStorage.setItem('attendance_students_friday', JSON.stringify(clean));
+                    localVersion = fbV; localStorage.setItem('att_v_friday', String(fbV));
+                    localStorage.setItem('attendance_deleted_friday', '[]');
                 } else if (localVersion > fbV) {
-                    const localData = JSON.parse(localStorage.getItem('attendance_students') || '{}');
+                    const localData = JSON.parse(localStorage.getItem('attendance_students_friday') || '{}');
                     const pushData = { ...localData, _v: localVersion };
-                    const deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
+                    const deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted_friday') || '[]');
                     deletedKeys.forEach(k => { pushData[k] = null; });
                     await fb.update(fb.recordsRef, pushData);
-                    localStorage.setItem('attendance_deleted', '[]');
+                    localStorage.setItem('attendance_deleted_friday', '[]');
                 }
                 await syncHistoryToFirebase();
                 await syncPendingHistoryDeletions();
@@ -758,7 +738,7 @@
 
         async function syncHistoryToFirebase() {
             if (!fbReady || !navigator.onLine) return;
-            let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
+            let pending = JSON.parse(localStorage.getItem('attendance_pending_history_friday') || '[]');
             const seen = new Set();
             pending = pending.filter(p => {
                 if (seen.has(p.id)) return false;
@@ -778,7 +758,7 @@
                     });
                     await Promise.all(syncPromises);
                     const remaining = pending.filter(p => !syncedIds.includes(p.id));
-                    localStorage.setItem('attendance_pending_history', JSON.stringify(remaining));
+                    localStorage.setItem('attendance_pending_history_friday', JSON.stringify(remaining));
                 } catch (e) {
                     console.error("Batch sync error", e);
                 }
@@ -786,7 +766,7 @@
         }
         function loadHistoryFromLocalStorage() {
             try {
-                let arr = JSON.parse(localStorage.getItem('attendance_history') || '[]');
+                let arr = JSON.parse(localStorage.getItem('attendance_history_friday') || '[]');
                 const cleanArr = [];
                 const seen = new Set();
                 arr.forEach(h => {
@@ -798,7 +778,7 @@
                 });
                 if (cleanArr.length !== arr.length) {
                     arr = cleanArr;
-                    localStorage.setItem('attendance_history', JSON.stringify(arr));
+                    localStorage.setItem('attendance_history_friday', JSON.stringify(arr));
                 }
                 if (arr.length > 0) { const data = {}; arr.forEach(h => { data[h.firebaseKey] = h; }); renderHistory(data); }
                 else renderHistory({});
@@ -813,21 +793,21 @@
                 renderHistory(data);
                 const arr = [];
                 for (const [k, v] of Object.entries(data)) { if (v !== null) arr.push({ firebaseKey: k, ...v }); }
-                localStorage.setItem('attendance_history', JSON.stringify(arr));
+                localStorage.setItem('attendance_history_friday', JSON.stringify(arr));
             }, (err) => { console.error("Firebase history error:", err); });
         }
         function queueHistoryDeletion(id) {
-            let pending = JSON.parse(localStorage.getItem('att_pending_hist_del') || '[]');
+            let pending = JSON.parse(localStorage.getItem('att_pending_hist_del_friday') || '[]');
             if (!pending.includes(id)) pending.push(id);
-            localStorage.setItem('att_pending_hist_del', JSON.stringify(pending));
+            localStorage.setItem('att_pending_hist_del_friday', JSON.stringify(pending));
         }
         async function syncPendingHistoryDeletions() {
             if (!fbReady || !navigator.onLine) return;
-            const pending = JSON.parse(localStorage.getItem('att_pending_hist_del') || '[]');
+            const pending = JSON.parse(localStorage.getItem('att_pending_hist_del_friday') || '[]');
             if (!pending.length) return;
             let synced = 0;
             for (const id of pending) { try { await fb.remove(fbRef(`history/${id}`)); synced++; } catch(e) {} }
-            if (synced > 0) localStorage.setItem('att_pending_hist_del', '[]');
+            if (synced > 0) localStorage.setItem('att_pending_hist_del_friday', '[]');
         }
         function renderHistory(data) {
             historyListContainer.innerHTML = '';
@@ -840,7 +820,7 @@
                 d.innerHTML = `<div class="history-item-info"><span class="history-item-title">${item.title}</span><span class="history-item-date">${new Date(item.date).toLocaleString()}</span><span class="history-item-count">${item.count} Students</span></div><div class="history-item-actions"><button class="history-action-btn h-view" data-key="${key}"><i class="fa-solid fa-eye"></i> View</button><button class="history-action-btn h-download" data-key="${key}"><i class="fa-solid fa-download"></i></button><button class="history-action-btn h-delete" data-key="${key}"><i class="fa-solid fa-trash"></i></button></div>`;
                 d.querySelector('.h-view').addEventListener('click', e => { e.stopPropagation(); viewHistory(key, item); });
                 d.querySelector('.h-delete').addEventListener('click', e => { e.stopPropagation(); pendingDeleteHistoryId = key; isClearAllMode = false; historyDeleteTitle.textContent = "Enter Password"; historyDeleteBtn.textContent = "Confirm Delete"; historyDeleteInput.value = ''; historyDeleteError.style.display = 'none'; historyDeleteModal.style.display = 'flex'; historyDeleteInput.focus(); });
-                d.querySelector('.h-download').addEventListener('click', e => { e.stopPropagation(); currentHistoryExportId = key; currentExportType = 'docx'; docPageTitleInput.value = item.title; docFileTitleInput.value = item.title.replace(/[^a-z0-9]/gi, '_'); docPercentFilterInput.value = '0'; document.getElementById('title-popup-header').textContent = "Export " + item.title; document.getElementById('main-export-inputs').style.display = 'none'; document.getElementById('payment-filter-btns').style.display = 'none'; titlePopupModal.classList.add('active'); docPercentFilterInput.focus(); });
+                d.querySelector('.h-download').addEventListener('click', e => { e.stopPropagation(); currentHistoryExportId = key; currentExportType = 'docx'; docPageTitleInput.value = item.title; docFileTitleInput.value = item.title.replace(/[^a-z0-9]/gi, '_'); docPercentFilterInput.value = '0'; document.getElementById('title-popup-header').textContent = "Export " + item.title; document.getElementById('main-export-inputs').style.display = 'none'; titlePopupModal.classList.add('active'); docPercentFilterInput.focus(); });
                 historyListContainer.appendChild(d);
             });
         }
@@ -849,8 +829,8 @@
             const sortedData = [...item.data].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
             let h = '<table style="width:max-content;min-width:100%"><thead><tr><th>#</th><th>Full Name</th><th>Gender</th>';
             for (let i = 1; i <= 26; i++) h += `<th>M${i}</th>`;
-            h += '<th>TM</th><th>%</th><th>P</th></tr></thead><tbody>';
-            sortedData.forEach((s, i) => { h += `<tr><td>${i+1}</td><td style="text-align:left;padding-left:10px">${s.name}</td><td>${s.gender}</td>${s.marks.map(m=>`<td>${m}</td>`).join('')}<td style="color:#00ff9d;font-weight:bold">${s.total}</td><td style="color:#00ff9d;font-weight:bold">${String(s.percent).replace('%','')}</td><td>${s.payment || 'U'}</td></tr>`; });
+            h += '<th>TM</th><th>%</th></tr></thead><tbody>';
+            sortedData.forEach((s, i) => { h += `<tr><td>${i+1}</td><td style="text-align:left;padding-left:10px">${s.name}</td><td>${s.gender}</td>${s.marks.map(m=>`<td>${m}</td>`).join('')}<td style="color:#00ff9d;font-weight:bold">${s.total}</td><td style="color:#00ff9d;font-weight:bold">${String(s.percent).replace('%','')}</td></tr>`; });
             h += '</tbody></table>'; historyTableContainer.innerHTML = h; historyViewModal.classList.add('active');
         }
 
@@ -874,9 +854,9 @@
                 historyDeleteModal.style.display = 'none';
                 if (isClearAllMode) {
                     isClearAllMode = false;
-                    localStorage.setItem('attendance_history', '[]');
-                    localStorage.setItem('attendance_pending_history', '[]');
-                    localStorage.setItem('att_pending_hist_del', '[]');
+                    localStorage.setItem('attendance_history_friday', '[]');
+                    localStorage.setItem('attendance_pending_history_friday', '[]');
+                    localStorage.setItem('att_pending_hist_del_friday', '[]');
                     if (navigator.onLine && fbReady) {
                         try { await fb.remove(fb.historyRef); }
                         catch(e) { console.error("Firebase clear error:", e); }
@@ -887,9 +867,9 @@
                     if (navigator.onLine && fbReady) {
                         try { await fb.remove(fbRef(`history/${pendingDeleteHistoryId}`)); showToast("History deleted"); } catch(e) { showToast("Error deleting"); }
                     } else {
-                        let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
+                        let hist = JSON.parse(localStorage.getItem('attendance_history_friday') || '[]');
                         hist = hist.filter(h => h.firebaseKey !== pendingDeleteHistoryId);
-                        localStorage.setItem('attendance_history', JSON.stringify(hist));
+                        localStorage.setItem('attendance_history_friday', JSON.stringify(hist));
                         queueHistoryDeletion(pendingDeleteHistoryId);
                         renderHistory({}); loadHistoryFromLocalStorage(); showToast("Queued for sync");
                     }
@@ -924,7 +904,7 @@
             try {
                 const arr = [];
                 tableBody.querySelectorAll('tr').forEach(r => {
-                    const s = { name: r.cells[1].textContent, gender: r.cells[2].textContent, marks: [], total: r.cells[29].textContent, percent: r.cells[30].textContent, church: r.dataset.church, christ: r.dataset.christ, phone: r.dataset.phone, payment: r.cells[31].textContent };
+                    const s = { name: r.cells[1].textContent, gender: r.cells[2].textContent, marks: [], total: r.cells[29].textContent, percent: r.cells[30].textContent, church: r.dataset.church, christ: r.dataset.christ, phone: r.dataset.phone };
                     for (let i = 1; i <= 26; i++) s.marks.push(r.cells[2+i].textContent.trim());
                     arr.push(s);
                 });
@@ -937,7 +917,7 @@
                     data: arr 
                 };
                 const localKey = 'local_' + entryId;
-                let hist = JSON.parse(localStorage.getItem('attendance_history') || '[]');
+                let hist = JSON.parse(localStorage.getItem('attendance_history_friday') || '[]');
                 if (hist.some(h => h.firebaseKey === localKey)) {
                     showToast("Already moved recently!");
                     return;
@@ -946,16 +926,16 @@
                     showToast("Already in history.");
                     return;
                 }
-                let pending = JSON.parse(localStorage.getItem('attendance_pending_history') || '[]');
+                let pending = JSON.parse(localStorage.getItem('attendance_pending_history_friday') || '[]');
                 if (pending.some(p => p.id === entryId)) {
                     showToast("Already in queue.");
                     return;
                 }
                 hist.push({ firebaseKey: localKey, ...entry });
-                localStorage.setItem('attendance_history', JSON.stringify(hist));
+                localStorage.setItem('attendance_history_friday', JSON.stringify(hist));
                 pending = [...new Set(pending.map(p => p.id))].map(id => pending.find(p => p.id === id));
                 pending.push(entry); 
-                localStorage.setItem('attendance_pending_history', JSON.stringify(pending));
+                localStorage.setItem('attendance_pending_history_friday', JSON.stringify(pending));
                 showToast("Archiving...");
                 if (navigator.onLine && fbReady) {
                     try { await fb.push(fb.historyRef, entry); showToast("Moved to History!"); }
@@ -986,28 +966,12 @@
             afterConfirmAction = () => {
                 const deletedKey = selectedDetailRow.dataset.id;
                 selectedDetailRow.remove(); sortTableAndNumbers();
-                let deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted') || '[]');
+                let deletedKeys = JSON.parse(localStorage.getItem('attendance_deleted_friday') || '[]');
                 if (deletedKey && !deletedKeys.includes(deletedKey)) deletedKeys.push(deletedKey);
-                localStorage.setItem('attendance_deleted', JSON.stringify(deletedKeys));
+                localStorage.setItem('attendance_deleted_friday', JSON.stringify(deletedKeys));
                 saveData(); showToast("Student deleted"); selectedDetailRow = null;
             };
         });
-
-        document.getElementById('popup-paid-btn').addEventListener('click', () => {
-            if (!selectedDetailRow) return;
-            const pCell = selectedDetailRow.cells[31];
-            const pBtn = document.getElementById('popup-paid-btn');
-            if (pCell.textContent === 'P') {
-                pCell.textContent = 'U';
-                pCell.style.color = '#ff4d4d';
-            } else {
-                pCell.textContent = 'P';
-                pCell.style.color = '#00ff9d';
-            }
-            saveData();
-            detailPopup.classList.remove('active'); // Close popup immediately without toast
-        });
-
         detailPopup.querySelector('.popup-close').addEventListener('click', () => detailPopup.classList.remove('active'));
 
         genderBtns.forEach(b => b.addEventListener('click', function () { genderBtns.forEach(x => x.classList.remove('selected')); this.classList.add('selected'); genderInput.value = this.dataset.value; }));
@@ -1025,7 +989,7 @@
             const now = new Date(), sm = getCurrentMaxAttendanceMark() + 1;
             const row = document.createElement('tr'); let mh = '';
             for (let i = 1; i <= 26; i++) mh += '<td></td>';
-            row.innerHTML = `<td></td><td>${first} ${last}</td><td>${gender.charAt(0)}</td>${mh}<td>0</td><td>0</td><td>U</td>`;
+            row.innerHTML = `<td></td><td>${first} ${last}</td><td>${gender.charAt(0)}</td>${mh}<td>0</td><td>0</td>`;
             row.dataset.church = church; row.dataset.christ = christ;
             row.dataset.fullname = `${first} ${last}`; row.dataset.gender = gender; row.dataset.phone = phone;
             row.dataset.date = now.toLocaleDateString('en-GB');
@@ -1101,19 +1065,6 @@
                 document.getElementById('detail-phone').textContent = r.dataset.phone || "--";
                 document.getElementById('detail-date').textContent = r.dataset.date || "--";
                 document.getElementById('detail-time').textContent = r.dataset.time || "--";
-                
-                const pCell = r.cells[31];
-                const pBtn = document.getElementById('popup-paid-btn');
-                if (pCell.textContent === 'P') {
-                    pBtn.textContent = 'Unpaid';
-                    pBtn.classList.remove('paid-btn');
-                    pBtn.classList.add('unpaid-btn');
-                } else {
-                    pBtn.textContent = 'Paid';
-                    pBtn.classList.remove('unpaid-btn');
-                    pBtn.classList.add('paid-btn');
-                }
-
                 detailPopup.classList.add('active'); return;
             }
             if (td && td.cellIndex >= 3 && td.cellIndex <= 28) {
@@ -1152,6 +1103,7 @@
         });
         document.querySelector('.table-container').addEventListener('scroll', () => datePopup.style.display = 'none');
 
+        // ★★★ FIX: ATTENDANCE CAMERA FUNCTION ★★★
         toggleScanBtn.addEventListener('click', function () { vibrate(30); animateButton(this); if (cameraModal.classList.contains('active')) closeCam(); else { isAttendanceScan = true; openCam(); } });
         fileBtn.addEventListener('click', function () { vibrate(30); animateButton(this); isAttendanceScan = true; qrHiddenInput.click(); });
         
@@ -1201,6 +1153,7 @@
             }, 500);
         }
 
+        // ★★★ FIX: REGISTRATION CAMERA FUNCTION ★★★
         async function openRegCam() {
             regCameraModal.classList.add('active');
             try {
@@ -1322,7 +1275,7 @@
             }
         }
 
-        const RECENT_T = 'recentDocTitles', RECENT_F = 'recentDocFiles';
+        const RECENT_T = 'recentDocTitles_friday', RECENT_F = 'recentDocFiles_friday';
         function getRecent(k) { return JSON.parse(localStorage.getItem(k) || '[]'); }
         function saveRecent(k, v) { let l = getRecent(k); l = l.filter(i => i !== v); l.unshift(v); if (l.length > 5) l.pop(); localStorage.setItem(k, JSON.stringify(l)); }
         function setupAuto(input, dropId, storageKey) {
@@ -1342,27 +1295,12 @@
             vibrate(30); exportContextMenu.classList.remove('active'); currentExportType = 'docx'; currentHistoryExportId = null;
             document.getElementById('title-popup-header').textContent = "Export Document";
             document.getElementById('main-export-inputs').style.display = 'block';
-            document.getElementById('payment-filter-btns').style.display = 'flex';
             docPageTitleInput.value = ''; docFileTitleInput.value = ''; docPercentFilterInput.value = '0';
-            document.querySelectorAll('.payment-filter-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.payment-filter-btn[data-filter="all"]').classList.add('active');
             titlePopupModal.classList.add('active'); docPageTitleInput.focus();
         });
-
-        document.querySelectorAll('.payment-filter-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.payment-filter-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                vibrate(30);
-            });
-        });
-
         titleCancelBtn.addEventListener('click', () => titlePopupModal.classList.remove('active'));
         titleDownloadBtn.addEventListener('click', () => {
             vibrate(30); const pf = parseInt(docPercentFilterInput.value) || 0;
-            const activeBtn = document.querySelector('.payment-filter-btn.active');
-            const paymentFilter = activeBtn ? activeBtn.dataset.filter : 'all';
-            
             if (currentHistoryExportId) {
                 if (fbReady) {
                     const hRef = fbRef(`history/${currentHistoryExportId}`);
@@ -1373,17 +1311,14 @@
                             const headers = ['#','Full Name','G']; let mx = 0;
                             sortedData.forEach(s => { s.marks.forEach((m, i) => { if (m && i+1 > mx) mx = i+1; }); });
                             for (let i = 1; i <= mx; i++) headers.push(`M${i}`);
-                            headers.push('TM'); headers.push('%'); headers.push('P');
+                            headers.push('TM'); headers.push('%');
                             const data = [];
                             sortedData.forEach(s => {
                                 if (parseFloat(s.percent) >= pf) {
-                                    const pmt = s.payment || 'U';
-                                    if (paymentFilter === 'all' || pmt === paymentFilter) {
-                                        const r = [String(data.length+1), s.name, s.gender];
-                                        for (let m = 0; m < mx; m++) r.push(s.marks[m]||'');
-                                        r.push(s.total); r.push(String(s.percent).replace('%','')); r.push(pmt);
-                                        data.push(r);
-                                    }
+                                    const r = [String(data.length+1), s.name, s.gender];
+                                    for (let m = 0; m < mx; m++) r.push(s.marks[m]||'');
+                                    r.push(s.total); r.push(String(s.percent).replace('%',''));
+                                    data.push(r);
                                 }
                             });
                             genDocx(item.title, item.title.replace(/[^a-z0-9]/gi,'_'), { headers, data, maxMark: mx });
@@ -1394,37 +1329,34 @@
             } else {
                 const pt = docPageTitleInput.value.trim(), ft = docFileTitleInput.value.trim();
                 if (!pt || !ft) { showToast("Enter text"); return; }
-                saveRecent(RECENT_T, pt); saveRecent(RECENT_F, ft); genDocx(pt, ft, null, pf, paymentFilter);
+                saveRecent(RECENT_T, pt); saveRecent(RECENT_F, ft); genDocx(pt, ft, null, pf);
             }
             titlePopupModal.classList.remove('active');
         });
         docFileTitleInput.addEventListener('keyup', e => { if (e.key === 'Enter') titleDownloadBtn.click(); });
 
-        function getTableData(filterPct, paymentFilter) {
+        function getTableData(filterPct) {
             const rows = Array.from(tableBody.querySelectorAll('tr')); if (!rows.length) return null;
             const sortedRows = [...rows].sort((a, b) => a.cells[1].textContent.trim().toLowerCase().localeCompare(b.cells[1].textContent.trim().toLowerCase()));
             const mx = Math.max(getCurrentMaxAttendanceMark(), 1);
             const headers = ['#','Full Name','G'];
             for (let i = 1; i <= mx; i++) headers.push(`M${i}`);
-            headers.push('TM'); headers.push('%'); headers.push('P');
+            headers.push('TM'); headers.push('%');
             const data = []; let c = 1;
             sortedRows.forEach(r => {
                 if (parseFloat(r.cells[30].textContent) >= filterPct) {
-                    const pmt = r.cells[31].textContent.trim() || 'U';
-                    if (paymentFilter === 'all' || pmt === paymentFilter) {
-                        const rd = [String(c), r.cells[1].textContent.trim(), r.cells[2].textContent.trim()];
-                        for (let m = 1; m <= mx; m++) rd.push(r.cells[2+m].textContent.trim()||'');
-                        rd.push(r.cells[29].textContent.trim()); rd.push(r.cells[30].textContent.trim()); rd.push(pmt);
-                        data.push(rd); c++;
-                    }
+                    const rd = [String(c), r.cells[1].textContent.trim(), r.cells[2].textContent.trim()];
+                    for (let m = 1; m <= mx; m++) rd.push(r.cells[2+m].textContent.trim()||'');
+                    rd.push(r.cells[29].textContent.trim()); rd.push(r.cells[30].textContent.trim());
+                    data.push(rd); c++;
                 }
             });
             return { headers, data, maxMark: mx };
         }
 
-        function genDocx(docTitle, fileTitle, pre, filterPct, paymentFilter) {
+        function genDocx(docTitle, fileTitle, pre, filterPct) {
             try {
-                const td = pre || getTableData(filterPct || 0, paymentFilter || 'all');
+                const td = pre || getTableData(filterPct || 0);
                 if (!td || !td.data.length) { showToast("No data"); return; }
                 const { headers, data, maxMark } = td;
                 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -1433,18 +1365,17 @@
                 let pw, ph; if (orient === 'portrait') { pw = 11906; ph = 16838; } else { pw = 16838; ph = 11906; }
                 const margin = 1440; const usable = (orient === 'portrait' ? pw : ph) - margin * 2;
                 const nameIdx = headers.indexOf('Full Name');
-                const markCols = headers.filter(h => h !== '#' && h !== 'Full Name' && h !== 'G' && h !== 'TM' && h !== '%' && h !== 'P').length;
+                const markCols = headers.filter(h => h !== '#' && h !== 'Full Name' && h !== 'G' && h !== 'TM' && h !== '%').length;
                 const nameW = Math.min(Math.max(Math.floor(usable * 0.22), 1200), 3500);
                 const numW = Math.min(Math.floor(usable * 0.04), 600);
                 const tmW = Math.min(Math.floor(usable * 0.05), 700);
                 const pctW = Math.min(Math.floor(usable * 0.06), 800);
-                const pW = Math.min(Math.floor(usable * 0.04), 600);
-                const remaining = usable - nameW - numW - tmW - pctW - pW;
+                const remaining = usable - nameW - numW - tmW - pctW;
                 const markW = Math.min(Math.max(Math.floor(remaining / Math.max(markCols, 1)), 300), 600);
                 const colWidths = headers.map(h => {
                     if (h === '#') return numW; if (h === 'Full Name') return nameW;
                     if (h === 'G') return numW; if (h === 'TM') return tmW;
-                    if (h === '%') return pctW; if (h === 'P') return pW; return markW;
+                    if (h === '%') return pctW; return markW;
                 });
                 const totalW = colWidths.reduce((a, b) => a + b, 0);
 
@@ -1452,17 +1383,16 @@
                     const w = colWidths[colIdx] || 500;
                     const isTM = headers[colIdx] === 'TM';
                     const isPct = headers[colIdx] === '%';
-                    const isP = headers[colIdx] === 'P';
                     const isName = colIdx === nameIdx;
                     const isMarkHeader = isHeader && /^M\d+$/.test(text);
                     let bg, co, bold, jc;
                     if (isHeader) {
-                        bg = (isTM || isPct || isP) ? 'E6B800' : '3C0028';
-                        co = (isTM || isPct || isP) ? '3C0028' : 'E6B800';
+                        bg = (isTM || isPct) ? 'E6B800' : '3C0028';
+                        co = (isTM || isPct) ? '3C0028' : 'E6B800';
                         bold = '<w:b/>'; jc = 'center';
                     } else {
-                        bg = (isTM || isPct || isP) ? 'FFF3CD' : 'FFFFFF'; // Golden background for P column data as well
-                        co = (isTM || isPct || isP) ? '3C0028' : '000000';
+                        bg = (isTM || isPct) ? 'FFF3CD' : 'FFFFFF';
+                        co = (isTM || isPct) ? '3C0028' : '000000';
                         bold = ''; jc = isName ? 'left' : 'center';
                     }
                     if (isMarkHeader) {
@@ -1529,13 +1459,13 @@
 
         if ('serviceWorker' in navigator) {
             const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'];
-            const sw = 'const CN="AttendanceApp_v7",U=' + JSON.stringify(urls) + ';self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match("./")))});';
+            const sw = 'const CN="AttendanceApp_v8_Friday",U=' + JSON.stringify(urls) + ';self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match("./")))});';
             navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
         }
 
         window.addEventListener('load', async () => {
             const rem = getRemaining();
-            const st = JSON.parse(localStorage.getItem('attendanceState') || 'null');
+            const st = JSON.parse(localStorage.getItem('attendanceState_friday') || 'null');
             if (rem > 0 && st && st.isOpen) {
                 isAttendanceOpen = false; currentAttendanceMark = st.currentMark;
                 markedThisMark = new Set(st.markedSet || []);
@@ -1543,7 +1473,7 @@
             } else if (rem <= 0 && st && st.isOpen) {
                 currentAttendanceMark = st.currentMark; markedThisMark = new Set(st.markedSet || []);
                 markAbsentAfterTimeout(); clearCountdownEnd();
-                localStorage.setItem('attendanceState', JSON.stringify({ ...st, isOpen: false }));
+                localStorage.setItem('attendanceState_friday', JSON.stringify({ ...st, isOpen: false }));
             }
         });
 
@@ -1571,7 +1501,7 @@
             if (loaded) {
                 fb.onAuth(fb.auth, async user => {
                     if (user) {
-                        localStorage.setItem('offline_auth', '1');
+                        localStorage.setItem('offline_auth_friday', '1');
                         appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex';
                         if (navigator.onLine) { await syncLocalToCloud(); loadFirebaseData(); loadHistoryFromFirebase(); }
                     } else {
@@ -1583,16 +1513,16 @@
                 lockInput.addEventListener('keyup', e => { if (e.key === 'Enter') lockBtn.click(); });
                 logoutBtn.addEventListener('click', async () => { await fb.signOut(fb.auth); });
             } else {
-                const wasAuth = localStorage.getItem('offline_auth');
+                const wasAuth = localStorage.getItem('offline_auth_friday');
                 if (wasAuth) { appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex'; }
                 else { appLockModal.style.display = 'flex'; lockInput.focus(); }
                 lockBtn.addEventListener('click', () => {
-                    if (lockInput.value === 'Debebe!') { localStorage.setItem('offline_auth', '1'); appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex'; }
+                    if (lockInput.value === 'Debebe!') { localStorage.setItem('offline_auth_friday', '1'); appLockModal.style.display = 'none'; logoutBtn.style.display = 'flex'; }
                     else { lockError.style.display = 'block'; lockInput.value = ''; lockInput.focus(); }
                 });
                 lockInput.addEventListener('keyup', e => { if (e.key === 'Enter') lockBtn.click(); });
                 logoutBtn.addEventListener('click', () => {
-                    localStorage.removeItem('offline_auth'); appLockModal.style.display = 'flex';
+                    localStorage.removeItem('offline_auth_friday'); appLockModal.style.display = 'flex';
                     logoutBtn.style.display = 'none'; lockInput.value = ''; lockError.style.display = 'none'; lockInput.focus();
                 });
             }
