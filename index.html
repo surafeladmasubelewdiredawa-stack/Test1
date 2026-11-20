@@ -240,6 +240,14 @@
                 <i class="fa-solid fa-clock-rotate-left"></i>
                 <span>Student List History</span>
             </div>
+            <div class="settings-menu-item" id="opt-install" style="display:none">
+                <i class="fa-solid fa-download"></i>
+                <span>Install App</span>
+            </div>
+            <div class="settings-menu-item" id="opt-install-ios" style="display:none">
+                <i class="fa-solid fa-share-nodes"></i>
+                <span>Install on iPhone</span>
+            </div>
         </div>
     </div>
     <div class="center">
@@ -438,13 +446,13 @@
 
         const animateButton = b => { b.style.transform = 'scale(0.92)'; setTimeout(() => b.style.transform = '', 140); };
         const vibrate = d => { if ('vibrate' in navigator) navigator.vibrate(d || 30); };
-        const showToast = (msg, center) => {
+        const showToast = (msg, center, duration) => {
             const t = document.getElementById('toast');
             t.textContent = msg;
             t.classList.remove('bottom-toast', 'center-toast');
             t.classList.add(center ? 'center-toast' : 'bottom-toast');
             t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 1500);
+            setTimeout(() => t.classList.remove('show'), duration || 1500);
         };
 
         const toggleScanBtn = document.getElementById('toggle-scan-btn');
@@ -1536,9 +1544,80 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .catch(err => console.error('SW registration failed:', err));
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => {
+                        console.error('SW registration failed:', err);
+                        // Show a visible hint so the user knows WHY install
+                        // is unavailable, instead of a silent console error.
+                        if (location.protocol === 'file:') {
+                            showToast('Cannot install from file:// - serve via HTTPS or localhost', true, 4500);
+                        } else if (location.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(location.hostname)) {
+                            showToast('Install requires HTTPS', true, 3000);
+                        }
+                    });
+            });
+        } else {
+            // No SW support at all (very old browser) -> install impossible.
+            window.addEventListener('load', () => {
+                if (location.protocol === 'file:')
+                    showToast('Cannot install from file:// - serve via HTTPS', true, 4500);
             });
         }
+
+        // === PWA Install prompt handling ===
+        // Chrome no longer auto-shows the install infobar; we must capture
+        // 'beforeinstallprompt' and call .prompt() from a user gesture.
+        // iOS Safari does not fire beforeinstallprompt - users there must
+        // use Share -> Add to Home Screen, so a separate item is shown.
+        let deferredInstallPrompt = null;
+        const optInstall = document.getElementById('opt-install');
+        const optInstallIos = document.getElementById('opt-install-ios');
+
+        // iOS / iPadOS detection (iPadOS 13+ reports as MacIntel).
+        const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase())
+            || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) optInstallIos.style.display = 'flex';
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the default (Chrome 93+ no longer shows it anyway, but
+            // we keep this so the event is stashed for our own button).
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            optInstall.style.display = 'flex';
+            // One-time hint so the user knows where to find Install.
+            if (!localStorage.getItem('install_hint_shown')) {
+                localStorage.setItem('install_hint_shown', '1');
+                showToast('Install available in Settings', false, 2500);
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            optInstall.style.display = 'none';
+            showToast('App installed!', true);
+        });
+
+        optInstall.addEventListener('click', async () => {
+            vibrate(30);
+            settingsPanel.classList.remove('active');
+            if (!deferredInstallPrompt) {
+                showToast('Install not available', true);
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            try {
+                const choice = await deferredInstallPrompt.userChoice;
+                if (choice.outcome === 'accepted') showToast('Installing...', true);
+            } catch (e) { /* user dismissed */ }
+            deferredInstallPrompt = null;
+            optInstall.style.display = 'none';
+        });
+
+        optInstallIos.addEventListener('click', () => {
+            vibrate(30);
+            settingsPanel.classList.remove('active');
+            showToast('Tap the Share button, then "Add to Home Screen"', true, 4500);
+        });
 
         window.addEventListener('load', async () => {
             const rem = getRemaining();
