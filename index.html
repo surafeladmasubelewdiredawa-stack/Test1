@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Attendance System for sunday</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
-    <link rel="manifest" id="app-manifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3C0028">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ASP">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
@@ -1524,14 +1528,16 @@
             return (crc ^ 0xFFFFFFFF) >>> 0;
         }
 
-        // Changed app name from "\u200E " / "AS" to "ASP" for home screen icon
-        const manifestContent = { name: "\u200E", short_name: "ASP", start_url: "AS/", display: "standalone", background_color: "#000", theme_color: "#3C0028", icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233C0028'/%3E%3Cpath d='M30 50 L45 65 L70 35' stroke='%23E6B800' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }] };
-        document.getElementById('app-manifest').href = URL.createObjectURL(new Blob([JSON.stringify(manifestContent)], { type: 'application/json' }));
-
+        // Manifest is now a real file (manifest.json) linked from <head>,
+        // and the service worker is now a real file (sw.js).
+        // Chrome refuses to make a PWA installable when the service worker
+        // is registered from a blob: URL - it MUST come from a same-origin
+        // HTTPS URL. So we register sw.js directly.
         if ('serviceWorker' in navigator) {
-            const urls = ['./','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js','https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'];
-            const sw = 'const CN="AttendanceApp_v7",U=' + JSON.stringify(urls) + ';self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(CN).then(c=>c.addAll(U)))});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CN).map(x=>caches.delete(x)))))});self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(f=>caches.open(CN).then(c=>{c.put(e.request,f.clone());return f}))).catch(()=>caches.match("./")))});';
-            navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .catch(err => console.error('SW registration failed:', err));
+            });
         }
 
         window.addEventListener('load', async () => {
@@ -1559,12 +1565,10 @@
             }
         });
 
-        window.addEventListener('online', async () => {
-            showToast("Syncing...", true);
-            if (!fbReady) await loadFirebase();
-            if (fbReady) { await syncLocalToCloud(); loadFirebaseData(); loadHistoryFromFirebase(); }
-        });
-        window.addEventListener('offline', () => {});
+        // Online/offline status text and event listeners removed per request.
+        // The functional navigator.onLine checks elsewhere are kept so the
+        // Firebase sync logic still works; only the visible "Syncing..."
+        // toast and the empty 'offline' handler have been removed.
 
         async function initApp() {
             loadFromLocalStorage(); loadHistoryFromLocalStorage();
